@@ -13,10 +13,10 @@ export function Footer() {
                         <Image
                             src="/logo.png"
                             alt="Siphonet"
-                            width={200}
-                            height={40}
+                            width={260}
+                            height={52}
                             style={{ width: 'auto', height: 'auto' }}
-                            className="h-10 brightness-0 invert mb-6"
+                            className="h-[52px] brightness-0 invert mb-6"
                         />
                         <p className="text-slate-300 text-sm mb-4">
                             Công ty Cổ phần Siphonet - Chuyên cung cấp, lắp đặt thiết bị cơ điện M&E, hệ thống cấp thoát nước và xử lý nước.

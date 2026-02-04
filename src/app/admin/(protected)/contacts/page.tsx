@@ -147,7 +147,7 @@ export default function ContactsManagement() {
                         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-right-4">
                             <div className="p-6 border-b border-slate-50 bg-slate-50/50">
                                 <h2 className="text-xl font-bold text-slate-900 mb-4">{selectedMessage.product_category || 'Liên hệ từ website'}</h2>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     <div className="flex items-center gap-2 text-sm text-slate-600">
                                         <div className="p-2 bg-white rounded-lg border border-slate-100"><User size={14} className="text-primary" /></div>
                                         <div className="truncate">
@@ -169,7 +169,39 @@ export default function ContactsManagement() {
                                             {selectedMessage.phone || 'N/A'}
                                         </div>
                                     </div>
+                                    {selectedMessage.company && (
+                                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                                            <div className="p-2 bg-white rounded-lg border border-slate-100"><MessageSquare size={14} className="text-amber-500" /></div>
+                                            <div className="truncate">
+                                                <div className="text-[10px] uppercase font-bold text-slate-400">Công ty</div>
+                                                {selectedMessage.company}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
+
+                                {(selectedMessage.quantity || selectedMessage.budget || selectedMessage.timeline) && (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
+                                        {selectedMessage.quantity && (
+                                            <div>
+                                                <div className="text-[10px] uppercase font-bold text-slate-400">Số lượng</div>
+                                                <div className="text-sm text-slate-700">{selectedMessage.quantity}</div>
+                                            </div>
+                                        )}
+                                        {selectedMessage.budget && (
+                                            <div>
+                                                <div className="text-[10px] uppercase font-bold text-slate-400">Ngân sách</div>
+                                                <div className="text-sm text-slate-700">{selectedMessage.budget}</div>
+                                            </div>
+                                        )}
+                                        {selectedMessage.timeline && (
+                                            <div>
+                                                <div className="text-[10px] uppercase font-bold text-slate-400">Thời gian</div>
+                                                <div className="text-sm text-slate-700">{selectedMessage.timeline}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             <div className="p-8">
                                 <div className="mb-8">

@@ -15,11 +15,11 @@ export function CTASection() {
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
                         <a
-                            href="tel:0123456789"
+                            href="tel:0913381683"
                             className="inline-flex items-center gap-2 px-8 py-4 bg-white text-accent hover:bg-slate-100 font-medium rounded-lg transition-colors"
                         >
                             <Phone className="h-5 w-5" />
-                            0123 456 789
+                            0913381683
                         </a>
 
                         <a

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { Send, FileText, CheckCircle2, Clock, Shield, TrendingUp } from 'lucide-react'
+import { Send, FileText, CheckCircle2, Clock, Shield, TrendingUp, Loader2 } from 'lucide-react'
 
 export default function QuotePage() {
     const [formData, setFormData] = useState({
@@ -18,12 +18,31 @@ export default function QuotePage() {
         timeline: ''
     })
     const [isSubmitted, setIsSubmitted] = useState(false)
+    const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('Quote request:', formData)
-        setIsSubmitted(true)
-        // TODO: Implement actual form submission
+        setStatus('submitting')
+
+        try {
+            const response = await fetch('/api/quote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+
+            const result = await response.json()
+            if (result.success) {
+                setStatus('success')
+                setIsSubmitted(true)
+            } else {
+                setStatus('error')
+                alert(result.error || 'Có lỗi xảy ra, vui lòng thử lại.')
+            }
+        } catch (error) {
+            setStatus('error')
+            alert('Lỗi kết nối máy chủ.')
+        }
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -300,10 +319,20 @@ export default function QuotePage() {
                                     <div className="pt-4">
                                         <button
                                             type="submit"
-                                            className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-accent to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-xl shadow-accent/30 flex items-center justify-center gap-2"
+                                            disabled={status === 'submitting'}
+                                            className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-accent to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-xl shadow-accent/30 flex items-center justify-center gap-2 disabled:opacity-70 disabled:scale-100"
                                         >
-                                            <Send className="h-5 w-5" />
-                                            Gửi yêu cầu báo giá
+                                            {status === 'submitting' ? (
+                                                <>
+                                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                                    Đang xử lý...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Send className="h-5 w-5" />
+                                                    Gửi yêu cầu báo giá
+                                                </>
+                                            )}
                                         </button>
                                         <p className="text-xs text-slate-500 mt-3">
                                             Bằng việc gửi form này, bạn đồng ý với chính sách bảo mật thông tin của chúng tôi.

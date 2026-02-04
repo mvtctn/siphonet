@@ -50,15 +50,14 @@ export function Header() {
                 {/* Main Header */}
                 <div className="container mx-auto px-4">
                     <div className="flex h-20 items-center justify-between">
-                        {/* Logo */}
                         <Link href="/" className="flex items-center">
                             <Image
                                 src="/logo.png"
                                 alt="Siphonet Logo"
-                                width={160}
-                                height={40}
+                                width={208}
+                                height={52}
                                 priority
-                                className="h-10 w-auto object-contain"
+                                className="h-[52px] w-auto object-contain"
                             />
                         </Link>
 
@@ -197,9 +196,9 @@ export function Header() {
                             <Image
                                 src="/logo.png"
                                 alt="Siphonet Logo"
-                                width={120}
-                                height={30}
-                                className="h-8 w-auto object-contain"
+                                width={156}
+                                height={40}
+                                className="h-[40px] w-auto object-contain"
                             />
                         </Link>
                         <button
