@@ -15,6 +15,7 @@ interface ProductDetailProps {
         stock: number
         sku: string
         category: string
+        categoryId: string
         images: string[]
         technicalSpecifications?: Array<{
             parameter: string

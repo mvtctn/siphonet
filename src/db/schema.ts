@@ -1,8 +1,8 @@
-import { pgTable, text, timestamp, integer, boolean, jsonb, uuid, varchar, decimal } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, integer, boolean, jsonb, uuid, varchar, decimal, type PgTableWithColumns } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // Categories Table
-export const categories = pgTable('categories', {
+export const categories: PgTableWithColumns<any> = pgTable('categories', {
     id: uuid('id').defaultRandom().primaryKey(),
     name: varchar('name', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 255 }).notNull().unique(),
