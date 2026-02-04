@@ -66,19 +66,75 @@ export function ProductsPage() {
         const fetchProducts = async () => {
             setIsLoadingProducts(true)
             try {
-                const params = new URLSearchParams()
-                if (selectedCategory !== 'all') params.append('category', selectedCategory)
-                if (debouncedSearch) params.append('search', debouncedSearch)
-                if (priceRange[0] > 0) params.append('minPrice', priceRange[0].toString())
-                if (priceRange[1] < 100000000) params.append('maxPrice', priceRange[1].toString())
-                if (minRating > 0) params.append('minRating', minRating.toString())
-                params.append('sortBy', sortBy)
+                // Initial query
+                let query = supabase
+                    .from('products')
+                    .select(`
+                        *,
+                        categories (
+                            id,
+                            name,
+                            slug
+                        )
+                    `)
+                    .eq('status', 'published')
 
-                const res = await fetch(`/api/products?${params.toString()}`)
-                const data = await res.json()
+                // Apply category filter
+                if (selectedCategory !== 'all') {
+                    // We need to find the category ID for the slug
+                    const cat = categories.find(c => c.slug === selectedCategory)
+                    if (cat) {
+                        query = query.eq('category_id', cat.id)
+                    }
+                }
 
-                if (data.success) {
-                    setProducts(data.data)
+                // Apply search filter
+                if (debouncedSearch) {
+                    query = query.ilike('name', `%${debouncedSearch}%`)
+                }
+
+                // Apply price filter
+                if (priceRange[0] > 0) {
+                    query = query.gte('price', priceRange[0])
+                }
+                if (priceRange[1] < 100000000) {
+                    query = query.lte('price', priceRange[1])
+                }
+
+                // Apply sorting
+                switch (sortBy) {
+                    case 'price-asc':
+                        query = query.order('price', { ascending: true })
+                        break
+                    case 'price-desc':
+                        query = query.order('price', { ascending: false })
+                        break
+                    case 'name':
+                        query = query.order('name', { ascending: true })
+                        break
+                    case 'popular':
+                        query = query.order('featured', { ascending: false })
+                        break
+                    case 'newest':
+                    default:
+                        query = query.order('created_at', { ascending: false })
+                        break
+                }
+
+                const { data, error } = await query
+
+                if (error) throw error
+
+                if (data) {
+                    // Transform data to match local interface if needed
+                    const transformed = data.map((p: any) => ({
+                        ...p,
+                        category: p.categories?.name || '',
+                        price: parseFloat(p.price),
+                        images: p.images || [],
+                        rating: 4.5
+                    }))
+                    setProducts(transformed)
                 }
             } catch (error) {
                 console.error('Error fetching products:', error)
@@ -89,7 +145,7 @@ export function ProductsPage() {
         }
 
         fetchProducts()
-    }, [selectedCategory, debouncedSearch, priceRange, minRating, sortBy])
+    }, [selectedCategory, debouncedSearch, priceRange, minRating, sortBy, categories])
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-cyan-50/30">
