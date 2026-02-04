@@ -35,12 +35,22 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
                 <div className="flex flex-col md:flex-row">
                     {/* Image */}
                     <div className="relative md:w-64 aspect-square md:aspect-auto bg-slate-100 overflow-hidden flex-shrink-0">
-                        <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-400">
-                            <div className="text-center">
-                                <Eye className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                                <p className="text-sm">Hình ảnh</p>
+                        {product.images && product.images.length > 0 && product.images[0] ? (
+                            <Image
+                                src={product.images[0]}
+                                alt={product.name}
+                                fill
+                                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                sizes="(max-width: 768px) 100vw, 256px"
+                            />
+                        ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-400">
+                                <div className="text-center">
+                                    <Eye className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                                    <p className="text-sm">Hình ảnh</p>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {product.featured && (
                             <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold shadow-lg">
@@ -132,13 +142,24 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
     return (
         <div className="group relative bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:border-accent/30 transition-all duration-300 hover:-translate-y-1">
             {/* Image */}
+            {/* Image */}
             <div className="relative aspect-square bg-slate-100 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-400">
-                    <div className="text-center">
-                        <Eye className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                        <p className="text-sm">Hình ảnh sản phẩm</p>
+                {product.images && product.images.length > 0 && product.images[0] ? (
+                    <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-400">
+                        <div className="text-center">
+                            <Eye className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                            <p className="text-sm">Hình ảnh sản phẩm</p>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Badges */}
                 <div className="absolute top-3 left-3 flex flex-col gap-2">

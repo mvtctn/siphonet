@@ -2,6 +2,8 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // Middleware check login đã có ở middleware.ts, nhưng check lại session ở đây để chắc chắn lấy được user info nếu cần log action
 
 export async function GET(request: NextRequest) {
