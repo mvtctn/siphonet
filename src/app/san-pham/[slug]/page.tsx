@@ -12,21 +12,33 @@ export default async function ProductDetailPage({
     const { slug } = await params
 
     // Fetch product from Supabase
+    // Fetch product from Supabase
+    console.log('Fetching public product slug:', slug)
+
     const { data: product, error } = await supabase
         .from('products')
-        .select(`
-            *,
-            categories (
-                id,
-                name,
-                slug
-            )
-        `)
+        .select('*') // Simplify query to isolate join issues
         .eq('slug', slug)
         .single()
 
-    if (error || !product) {
+    if (error) {
+        console.error('Error fetching public product:', error)
+    }
+
+    if (!product) {
+        console.error('Public product not found for slug:', slug)
         notFound()
+    }
+
+    // Fetch category name separately
+    let categoryName = 'Sản phẩm'
+    if (product.category_id) {
+        const { data: cat } = await supabase
+            .from('categories')
+            .select('name')
+            .eq('id', product.category_id)
+            .single()
+        if (cat) categoryName = cat.name
     }
 
     // Transform data to match ProductDetail interface
@@ -38,8 +50,8 @@ export default async function ProductDetailPage({
         price: parseFloat(product.price),
         stock: product.stock,
         sku: product.sku || '',
-        category: product.categories?.name || '',
         categoryId: product.category_id,
+        category: categoryName,
         images: product.images || [],
         technicalSpecifications: product.technical_specifications || [],
         featured: product.featured || false,
