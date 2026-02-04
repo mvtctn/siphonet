@@ -1,6 +1,6 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Calendar, MapPin, User, Eye, CheckCircle } from 'lucide-react'
-import { mockProjects } from '@/lib/mock-data'
 
 interface ProjectDetailProps {
     project: {
@@ -15,13 +15,10 @@ interface ProjectDetailProps {
         category: string
         images: string[]
     }
+    relatedProjects?: any[]
 }
 
-export function ProjectDetail({ project }: ProjectDetailProps) {
-    const relatedProjects = mockProjects
-        .filter((p) => p.id !== project.id && p.category === project.category)
-        .slice(0, 3)
-
+export function ProjectDetail({ project, relatedProjects = [] }: ProjectDetailProps) {
     return (
         <div className="min-h-screen bg-white">
             {/* Breadcrumb */}
@@ -57,11 +54,20 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     {/* Main Content */}
                     <div className="lg:col-span-2">
                         {/* Project Image */}
-                        <div className="aspect-video bg-slate-100 rounded-xl flex items-center justify-center mb-8">
-                            <div className="text-center text-slate-400">
-                                <Eye className="h-20 w-20 mx-auto mb-4 opacity-30" />
-                                <p className="text-lg">Hình ảnh dự án</p>
-                            </div>
+                        <div className="relative aspect-video bg-slate-100 rounded-xl overflow-hidden mb-8 shadow-lg">
+                            {project.images && project.images[0] ? (
+                                <Image
+                                    src={project.images[0]}
+                                    alt={project.title}
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+                                    <Eye className="h-20 w-20 mb-4 opacity-30" />
+                                    <p className="text-lg">Hình ảnh dự án</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Technical Details */}
@@ -86,7 +92,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                                     'Thi công đúng tiến độ cam kết',
                                     'Đảm bảo chất lượng theo tiêu chuẩn',
                                     'Đội ngũ kỹ thuật chuyên nghiệp',
-                                    'Bàn giao đầy đủ hồ sơ竣工',
+                                    'Bàn giao đầy đủ hồ sơ hoàn công',
                                 ].map((feature, index) => (
                                     <div key={index} className="flex items-start gap-3 p-4 bg-slate-50 rounded-lg">
                                         <CheckCircle className="h-6 w-6 text-accent flex-shrink-0 mt-0.5" />
@@ -160,8 +166,19 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                                     href={`/du-an/${relatedProject.slug}`}
                                     className="group"
                                 >
-                                    <div className="aspect-[4/3] bg-slate-100 rounded-lg mb-4 flex items-center justify-center">
-                                        <Eye className="h-12 w-12 text-slate-300" />
+                                    <div className="relative aspect-[4/3] bg-slate-100 rounded-lg mb-4 overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                                        {relatedProject.images && relatedProject.images[0] ? (
+                                            <Image
+                                                src={relatedProject.images[0]}
+                                                alt={relatedProject.title}
+                                                fill
+                                                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                            />
+                                        ) : (
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <Eye className="h-12 w-12 text-slate-300" />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="text-xs text-accent font-medium mb-2">
                                         {relatedProject.category}

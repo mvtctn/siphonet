@@ -1,8 +1,10 @@
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { ProjectDetail } from '@/components/projects/ProjectDetail'
-import { mockProjects } from '@/lib/mock-data'
+import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
+
+export const dynamic = 'force-dynamic'
 
 export default async function ProjectDetailPage({
     params,
@@ -10,16 +12,36 @@ export default async function ProjectDetailPage({
     params: Promise<{ slug: string }>
 }) {
     const { slug } = await params
-    const project = mockProjects.find((p) => p.slug === slug)
 
-    if (!project) {
+    const { data: projectData } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('slug', slug)
+        .single()
+
+    if (!projectData) {
         notFound()
     }
+
+    // Transform for component
+    const project = {
+        ...projectData,
+        technicalDetails: projectData.technical_details,
+        completionDate: projectData.completion_date
+    }
+
+    // Fetch related projects
+    const { data: relatedData } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('category', projectData.category)
+        .neq('id', projectData.id)
+        .limit(3)
 
     return (
         <>
             <Header />
-            <ProjectDetail project={project} />
+            <ProjectDetail project={project} relatedProjects={relatedData || []} />
             <Footer />
         </>
     )
