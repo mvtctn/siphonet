@@ -3,8 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, Check, Share2, Heart, Eye, Package, Shield, TruckIcon } from 'lucide-react'
-import { mockProducts } from '@/lib/mock-data'
-
 interface ProductDetailProps {
     product: {
         id: string
@@ -25,15 +23,23 @@ interface ProductDetailProps {
             unit?: string
         }>
     }
+    relatedProducts: Array<{
+        id: string
+        name: string
+        slug: string
+        price: number
+        images: string[]
+        categoryId: string
+    }>
 }
 
-export function ProductDetail({ product }: ProductDetailProps) {
+export function ProductDetail({ product, relatedProducts }: ProductDetailProps) {
     const [quantity, setQuantity] = useState(1)
     const formattedPrice = new Intl.NumberFormat('vi-VN').format(product.price)
 
     return (
         <div className="min-h-screen bg-white">
-            {/* Breadcrumb */}
+            {/* Breadcrumb ... (omitted for brevity, unchanged) */}
             <div className="bg-slate-50 border-b border-slate-200">
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -48,6 +54,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
             <div className="container mx-auto px-4 py-12">
                 <div className="grid lg:grid-cols-2 gap-12 mb-16">
+                    {/* ... (omitted product details) ... */}
                     {/* Product Images */}
                     <div>
                         <div className="aspect-square bg-slate-100 rounded-xl flex items-center justify-center mb-4">
@@ -192,13 +199,11 @@ export function ProductDetail({ product }: ProductDetailProps) {
                 )}
 
                 {/* Related Products */}
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Sản phẩm liên quan</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {mockProducts
-                            .filter((p) => p.id !== product.id && p.categoryId === product.categoryId)
-                            .slice(0, 4)
-                            .map((relatedProduct) => (
+                {relatedProducts.length > 0 && (
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-6">Sản phẩm liên quan</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {relatedProducts.map((relatedProduct) => (
                                 <Link
                                     key={relatedProduct.id}
                                     href={`/san-pham/${relatedProduct.slug}`}
@@ -215,8 +220,9 @@ export function ProductDetail({ product }: ProductDetailProps) {
                                     </p>
                                 </Link>
                             ))}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     )

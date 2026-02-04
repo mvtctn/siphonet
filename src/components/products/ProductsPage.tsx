@@ -1,40 +1,95 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, SlidersHorizontal, Grid3x3, List, ArrowUpDown, Star, TrendingUp, Zap, Shield, Award } from 'lucide-react'
 import { ProductCard } from '@/components/products/ProductCard'
-import { mockProducts, mockCategories } from '@/lib/mock-data'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name' | 'popular'
 
 export function ProductsPage() {
+    const [products, setProducts] = useState<any[]>([])
+    const [categories, setCategories] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [isLoadingProducts, setIsLoadingProducts] = useState(false)
+
+    // Filters
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
     const [searchQuery, setSearchQuery] = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState('')
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000])
     const [minRating, setMinRating] = useState<number>(0)
     const [sortBy, setSortBy] = useState<SortOption>('newest')
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-    // Filter and sort products
-    const filteredProducts = mockProducts
-        .filter((product) => {
-            const matchesCategory = selectedCategory === 'all' || product.categoryId === selectedCategory
-            const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product.description.toLowerCase().includes(searchQuery.toLowerCase())
-            const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
-            const matchesRating = (product.rating || 0) >= minRating
-            return matchesCategory && matchesSearch && matchesPrice && matchesRating
-        })
-        .sort((a, b) => {
-            switch (sortBy) {
-                case 'price-asc': return a.price - b.price
-                case 'price-desc': return b.price - a.price
-                case 'name': return a.name.localeCompare(b.name)
-                case 'popular': return (b.rating || 0) - (a.rating || 0)
-                default: return 0
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery)
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
+
+    // Load initial data (Categories)
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                // We can use the test endpoint or a dedicated categories endpoint
+                // For now let's query directly via supabase client if available, 
+                // but since we are in client component, let's use the products API to verify connection 
+                // or just fetch from a new simple route. 
+                // Actually, let's just make a quick ad-hoc fetch for categories from supabase directly 
+                // IF we exported it, but we only have it in lib.
+                // Let's create a Fetch for categories later. For now, let's use the mockCategories if we don't have API.
+                // Wait, I can allow the API to return categories too.
+                // Let's stick to fetching products first, and maybe categories from an API.
+
+                // Let's assume we will build /api/categories later.
+                // For this step, I'll fetch categories from the database using a direct query via a new API route or just use the products API 
+                // which returns joined data, but not list of categories.
+                // I will add a simple get categories logic here.
+
+                // Temporary: Fetch categories from Supabase via client-side query 
+                // (requires exposing supabase to client, which we did in lib/supabase.ts)
+                const { data } = await supabase.from('categories').select('*')
+                if (data) setCategories(data)
+            } catch (error) {
+                console.error('Failed to fetch categories', error)
             }
-        })
+        }
+        fetchCategories()
+    }, [])
+
+    // Fetch Products when filters change
+    useEffect(() => {
+        const fetchProducts = async () => {
+            setIsLoadingProducts(true)
+            try {
+                const params = new URLSearchParams()
+                if (selectedCategory !== 'all') params.append('category', selectedCategory)
+                if (debouncedSearch) params.append('search', debouncedSearch)
+                if (priceRange[0] > 0) params.append('minPrice', priceRange[0].toString())
+                if (priceRange[1] < 100000000) params.append('maxPrice', priceRange[1].toString())
+                if (minRating > 0) params.append('minRating', minRating.toString())
+                params.append('sortBy', sortBy)
+
+                const res = await fetch(`/api/products?${params.toString()}`)
+                const data = await res.json()
+
+                if (data.success) {
+                    setProducts(data.data)
+                }
+            } catch (error) {
+                console.error('Error fetching products:', error)
+            } finally {
+                setIsLoading(false)
+                setIsLoadingProducts(false)
+            }
+        }
+
+        fetchProducts()
+    }, [selectedCategory, debouncedSearch, priceRange, minRating, sortBy])
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-cyan-50/30">
@@ -87,19 +142,19 @@ export function ProductsPage() {
                         <button
                             onClick={() => setSelectedCategory('all')}
                             className={`flex-shrink-0 px-6 py-2.5 rounded-full font-medium transition-all duration-300 ${selectedCategory === 'all'
-                                    ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-105'
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-105'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                 }`}
                         >
                             Tất cả
                         </button>
-                        {mockCategories.map((category) => (
+                        {categories.map((category) => (
                             <button
                                 key={category.id}
                                 onClick={() => setSelectedCategory(category.id)}
                                 className={`flex-shrink-0 px-6 py-2.5 rounded-full font-medium transition-all duration-300 ${selectedCategory === category.id
-                                        ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-105'
-                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-105'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                     }`}
                             >
                                 {category.name}
@@ -171,8 +226,8 @@ export function ProductsPage() {
                                             key={rating}
                                             onClick={() => setMinRating(rating === minRating ? 0 : rating)}
                                             className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${minRating === rating
-                                                    ? 'bg-accent text-white shadow-md'
-                                                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                                ? 'bg-accent text-white shadow-md'
+                                                : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                                                 }`}
                                         >
                                             <div className="flex items-center gap-1">
@@ -208,7 +263,7 @@ export function ProductsPage() {
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 {/* Results count */}
                                 <p className="text-slate-600 font-medium">
-                                    Hiển thị <span className="text-accent font-bold">{filteredProducts.length}</span> sản phẩm
+                                    Hiển thị <span className="text-accent font-bold">{products.length}</span> sản phẩm
                                 </p>
 
                                 <div className="flex items-center gap-3">
@@ -250,12 +305,23 @@ export function ProductsPage() {
                         </div>
 
                         {/* Products Grid/List */}
-                        {filteredProducts.length > 0 ? (
+                        {isLoadingProducts ? (
+                            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                                {[1, 2, 3, 4, 5, 6].map((i) => (
+                                    <div key={i} className="bg-white rounded-2xl p-4 h-96 animate-pulse">
+                                        <div className="w-full h-48 bg-slate-200 rounded-xl mb-4"></div>
+                                        <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+                                        <div className="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
+                                        <div className="h-8 bg-slate-200 rounded w-full mt-auto"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : products.length > 0 ? (
                             <div className={`grid gap-6 ${viewMode === 'grid'
-                                    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-                                    : 'grid-cols-1'
+                                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                                : 'grid-cols-1'
                                 }`}>
-                                {filteredProducts.map((product, index) => (
+                                {products.map((product, index) => (
                                     <div
                                         key={product.id}
                                         className="animate-fade-in"

@@ -1,10 +1,36 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '../products/ProductCard'
-import { mockProducts } from '@/lib/mock-data'
+import { supabase } from '@/lib/supabase'
 
-export function FeaturedProductsSection() {
-    const featuredProducts = mockProducts.filter(p => p.featured)
+export async function FeaturedProductsSection() {
+    // Fetch featured products from Supabase
+    const { data: featuredProductsData } = await supabase
+        .from('products')
+        .select(`
+            *,
+            categories (name)
+        `)
+        .eq('featured', true)
+        .eq('status', 'published')
+        .limit(6)
+
+    // Transform data
+    const featuredProducts = featuredProductsData?.map(p => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        description: p.description || '',
+        price: parseFloat(p.price),
+        stock: p.stock,
+        sku: p.sku || '',
+        category: p.categories?.name || '',
+        categoryId: p.category_id,
+        images: p.images || [],
+        technicalSpecifications: p.technical_specifications || [],
+        featured: p.featured || false,
+        rating: 4.5,
+    })) || []
 
     return (
         <section className="py-20 bg-white">
@@ -24,9 +50,15 @@ export function FeaturedProductsSection() {
 
                 {/* Products Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                    {featuredProducts.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                    ))}
+                    {featuredProducts.length > 0 ? (
+                        featuredProducts.map((product) => (
+                            <ProductCard key={product.id} product={product} />
+                        ))
+                    ) : (
+                        <div className="col-span-full text-center py-10 text-slate-500">
+                            Đang cập nhật sản phẩm nổi bật...
+                        </div>
+                    )}
                 </div>
 
                 {/* View All Button */}
