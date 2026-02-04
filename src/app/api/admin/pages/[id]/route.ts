@@ -1,0 +1,81 @@
+import { supabase } from '@/lib/supabase'
+import { NextRequest, NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic'
+
+export async function GET(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const { data, error } = await supabase
+            .from('pages')
+            .select('*')
+            .eq('id', id)
+            .single()
+
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 404 })
+        }
+
+        return NextResponse.json({ success: true, data })
+    } catch (error: any) {
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+}
+
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const body = await request.json()
+        const { title, slug, layout, meta_title, meta_description, status } = body
+
+        const { data, error } = await supabase
+            .from('pages')
+            .update({
+                title,
+                slug,
+                layout,
+                meta_title,
+                meta_description,
+                status,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        return NextResponse.json({ success: true, data })
+    } catch (error: any) {
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+}
+
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const { error } = await supabase
+            .from('pages')
+            .delete()
+            .eq('id', id)
+
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        return NextResponse.json({ success: true, message: 'Page deleted' })
+    } catch (error: any) {
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+}
