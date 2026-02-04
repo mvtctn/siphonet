@@ -1,10 +1,17 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { ProjectCard } from '../projects/ProjectCard'
-import { mockProjects } from '@/lib/mock-data'
+import { supabase } from '@/lib/supabase'
 
-export function FeaturedProjectsSection() {
-    const featuredProjects = mockProjects.filter(p => p.featured)
+export async function FeaturedProjectsSection() {
+    // Fetch featured projects from Supabase
+    const { data: featuredProjectsData } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('featured', true)
+        .limit(3)
+
+    const featuredProjects = featuredProjectsData || []
 
     return (
         <section className="py-20 bg-gradient-to-br from-slate-50 to-cyan-50">

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ProjectCard } from '@/components/projects/ProjectCard'
-import { mockProjects } from '@/lib/mock-data'
 
 export function ProjectsPage() {
+    const [projects, setProjects] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
     const categories = [
@@ -14,9 +15,26 @@ export function ProjectsPage() {
         { id: 'Xử lý nước thải', name: 'Xử lý nước thải' },
     ]
 
-    const filteredProjects = mockProjects.filter((project) =>
-        selectedCategory === 'all' || project.category === selectedCategory
-    )
+    useEffect(() => {
+        const fetchProjects = async () => {
+            setIsLoading(true)
+            try {
+                const url = selectedCategory === 'all'
+                    ? '/api/projects'
+                    : `/api/projects?category=${encodeURIComponent(selectedCategory)}`
+                const response = await fetch(url)
+                const result = await response.json()
+                if (result.success) {
+                    setProjects(result.data)
+                }
+            } catch (error) {
+                console.error('Failed to fetch projects', error)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchProjects()
+    }, [selectedCategory])
 
     return (
         <div className="min-h-screen bg-white">
@@ -72,16 +90,24 @@ export function ProjectsPage() {
                 {/* Results count */}
                 <div className="mb-6">
                     <p className="text-slate-600">
-                        Hiển thị <span className="font-semibold">{filteredProjects.length}</span> dự án
+                        Hiển thị <span className="font-semibold">{projects.length}</span> dự án
                     </p>
                 </div>
 
                 {/* Projects Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredProjects.map((project) => (
-                        <ProjectCard key={project.id} project={project} />
-                    ))}
-                </div>
+                {isLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div key={i} className="h-80 bg-slate-100 animate-pulse rounded-xl"></div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {projects.map((project: any) => (
+                            <ProjectCard key={project.id} project={project} />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     )
