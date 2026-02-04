@@ -12,7 +12,7 @@ export function AdminSidebar() {
     const navItems = [
         { href: '/admin/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
         { href: '/admin/products', label: 'Sản phẩm', icon: Package },
-        { href: '/admin/categories', label: 'Danh mục', icon: Tag },
+
         { href: '/admin/posts', label: 'Bài viết (Blog)', icon: FileText },
         { href: '/admin/pages', label: 'Trang tĩnh', icon: Layers },
         { href: '/admin/users', label: 'Người dùng', icon: Users },
