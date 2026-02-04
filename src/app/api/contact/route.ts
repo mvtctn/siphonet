@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 import { sendEmail, getEmailConfig } from '@/lib/email'
 
@@ -11,10 +11,17 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Vui lòng điền các trường bắt buộc' }, { status: 400 })
         }
 
-        // 1. Save to database
-        const { data, error } = await supabase
-            .from('contacts')
-            .insert([{ name, email, phone, subject, message, status: 'unread' }])
+        // 1. Save to database - Using quote_requests table which already exists
+        const { data, error } = await supabaseAdmin
+            .from('quote_requests')
+            .insert([{
+                name,
+                email,
+                phone,
+                product_category: subject || 'Liên hệ',
+                description: message,
+                status: 'new'
+            }])
             .select()
             .single()
 

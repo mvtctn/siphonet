@@ -1,10 +1,10 @@
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
     try {
-        const { data, error } = await supabase
-            .from('contacts')
+        const { data, error } = await supabaseAdmin
+            .from('quote_requests')
             .select('*')
             .order('created_at', { ascending: false })
 

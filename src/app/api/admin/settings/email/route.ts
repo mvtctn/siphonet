@@ -1,9 +1,9 @@
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('settings')
             .select('*')
             .eq('key', 'email_config')
@@ -30,7 +30,7 @@ export async function PUT(request: Request) {
         const body = await request.json()
         const { value } = body
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('settings')
             .upsert({
                 key: 'email_config',
