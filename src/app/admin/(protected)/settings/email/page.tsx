@@ -7,6 +7,7 @@ export default function EmailSettings() {
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
     const [showSuccess, setShowSuccess] = useState(false)
+    const [isTesting, setIsTesting] = useState(false)
     const [config, setConfig] = useState({
         host: '',
         port: 587,
@@ -53,6 +54,28 @@ export default function EmailSettings() {
             alert('Lỗi khi lưu cấu hình')
         } finally {
             setIsSaving(false)
+        }
+    }
+
+    const handleTestEmail = async () => {
+        setIsTesting(true)
+        try {
+            const response = await fetch('/api/admin/settings/email/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            })
+            const result = await response.json()
+            if (result.success) {
+                alert('Gửi email thử nghiệm thành công! Vui lòng kiểm tra hộp thư của bạn.')
+            } else {
+                alert(`Lỗi: ${result.error}`)
+            }
+        } catch (error) {
+            console.error('Test email failed', error)
+            alert('Không thể kết nối máy chủ để test email.')
+        } finally {
+            setIsTesting(false)
         }
     }
 
@@ -176,8 +199,17 @@ export default function EmailSettings() {
                         </div>
                     )}
                     <button
+                        type="button"
+                        onClick={handleTestEmail}
+                        disabled={isTesting || isSaving}
+                        className="px-6 py-3 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {isTesting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send size={20} className="text-slate-400" />}
+                        Gửi thử Email
+                    </button>
+                    <button
                         type="submit"
-                        disabled={isSaving}
+                        disabled={isSaving || isTesting}
                         className="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-600 shadow-xl shadow-primary/20 transition-all disabled:opacity-50 flex items-center gap-2"
                     >
                         {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save size={20} />}
