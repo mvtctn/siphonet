@@ -51,15 +51,14 @@ export function Header() {
                 <div className="container mx-auto px-4">
                     <div className="flex h-20 items-center justify-between">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center z-50">
+                        <Link href="/" className="flex items-center">
                             <Image
                                 src="/logo.png"
-                                alt="Siphonet"
+                                alt="Siphonet Logo"
                                 width={160}
-                                height={32}
+                                height={40}
                                 priority
-                                style={{ width: 'auto', height: 'auto' }}
-                                className="h-8"
+                                className="h-10 w-auto object-contain"
                             />
                         </Link>
 
@@ -197,11 +196,10 @@ export function Header() {
                         <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
                             <Image
                                 src="/logo.png"
-                                alt="Siphonet"
-                                width={150}
+                                alt="Siphonet Logo"
+                                width={120}
                                 height={30}
-                                style={{ width: 'auto', height: 'auto' }}
-                                className="h-8"
+                                className="h-8 w-auto object-contain"
                             />
                         </Link>
                         <button
