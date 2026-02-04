@@ -19,7 +19,7 @@ interface Product {
     price: number
     old_price?: number | null
     description?: string
-    short_description?: string
+
     category_id?: string
     images: string[]
     featured?: boolean
@@ -53,7 +53,7 @@ const defaultProduct: Product = {
     featured: false,
     category_id: '',
     description: '',
-    short_description: '',
+
     images: [],
     stock: 0, // Default stock
     technical_specifications: [], // Default technical_specifications
@@ -340,21 +340,7 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
                         </div>
                     </div>
 
-                    {/* Short Description */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-                        <div className="p-4 border-b border-slate-100 font-semibold bg-slate-50/50">Mô tả ngắn của sản phẩm</div>
-                        <div className="p-4">
-                            <div className="border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
-                                <Toolbar />
-                                <textarea
-                                    rows={5}
-                                    className="w-full p-4 focus:outline-none"
-                                    value={product.short_description || ''} // Handle legacy data
-                                    onChange={(e) => setProduct({ ...product, short_description: e.target.value })}
-                                ></textarea>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
 
                 {/* --- SIDEBAR COLUMN (Right) --- */}
