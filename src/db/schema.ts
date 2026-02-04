@@ -277,6 +277,45 @@ export const testimonials = pgTable('testimonials', {
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
+// Settings Table
+export const settings = pgTable('settings', {
+    key: varchar('key', { length: 255 }).primaryKey(),
+    value: jsonb('value').notNull(),
+    description: text('description'),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// Contacts Table
+export const contacts = pgTable('contacts', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: varchar('name', { length: 255 }).notNull(),
+    email: varchar('email', { length: 255 }).notNull(),
+    phone: varchar('phone', { length: 20 }),
+    subject: varchar('subject', { length: 500 }),
+    message: text('message').notNull(),
+    status: varchar('status', { length: 20 }).default('unread'), // unread, read, replied
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// Quote Requests Table
+export const quoteRequests = pgTable('quote_requests', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: varchar('name', { length: 255 }).notNull(),
+    company: varchar('company', { length: 500 }),
+    email: varchar('email', { length: 255 }).notNull(),
+    phone: varchar('phone', { length: 20 }).notNull(),
+    productCategory: varchar('product_category', { length: 100 }).notNull(),
+    quantity: varchar('quantity', { length: 255 }),
+    description: text('description').notNull(),
+    budget: varchar('budget', { length: 50 }),
+    timeline: varchar('timeline', { length: 50 }),
+    status: varchar('status', { length: 50 }).default('new'), // new, contacted, quoted, won, lost
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
 // Relations
 export const categoriesRelations = relations(categories, ({ many, one }) => ({
     products: many(products),

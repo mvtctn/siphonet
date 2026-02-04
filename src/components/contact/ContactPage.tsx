@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, Phone, MapPin, Clock, Send } from 'lucide-react'
+import { Mail, Phone, MapPin, Clock, Send, Loader2 } from 'lucide-react'
 
 export function ContactPage() {
     const [formData, setFormData] = useState({
@@ -12,10 +12,32 @@ export function ContactPage() {
         message: ''
     })
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('Form submitted:', formData)
-        // TODO: Implement form submission
+        setStatus('submitting')
+
+        try {
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+
+            const result = await response.json()
+            if (result.success) {
+                setStatus('success')
+                setFormData({ name: '', email: '', phone: '', subject: '', message: '' })
+                alert('Cảm ơn bạn! Tin nhắn của bạn đã được gửi thành công.')
+            } else {
+                setStatus('error')
+                alert(result.error || 'Có lỗi xảy ra, vui lòng thử lại.')
+            }
+        } catch (error) {
+            setStatus('error')
+            alert('Lỗi kết nối máy chủ.')
+        }
     }
 
     return (
@@ -167,10 +189,15 @@ export function ContactPage() {
 
                                 <button
                                     type="submit"
-                                    className="w-full md:w-auto px-8 py-3 bg-accent hover:bg-accent-600 text-white font-semibold rounded-lg transition-all hover:scale-105 shadow-lg shadow-accent/30 flex items-center justify-center gap-2"
+                                    disabled={status === 'submitting'}
+                                    className="w-full md:w-auto px-8 py-3 bg-accent hover:bg-accent-600 text-white font-semibold rounded-lg transition-all hover:scale-105 shadow-lg shadow-accent/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
                                 >
-                                    <Send className="h-5 w-5" />
-                                    Gửi tin nhắn
+                                    {status === 'submitting' ? (
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                    ) : (
+                                        <Send className="h-5 w-5" />
+                                    )}
+                                    {status === 'submitting' ? 'Đang gửi...' : 'Gửi tin nhắn'}
                                 </button>
                             </form>
                         </div>
