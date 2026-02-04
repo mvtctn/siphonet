@@ -58,8 +58,8 @@ export function HeroSection() {
                     </div>
 
                     {/* Features */}
-                    <div className="hidden lg:block">
-                        <div className="grid gap-4">
+                    <div className="mt-12 lg:mt-0">
+                        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
                             <div className="p-6 rounded-xl bg-white/5 backdrop-blur border border-white/10 hover:bg-white/10 transition-colors">
                                 <div className="flex items-start gap-4">
                                     <div className="p-3 rounded-lg bg-accent/20 text-accent">

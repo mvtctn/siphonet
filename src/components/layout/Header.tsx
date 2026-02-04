@@ -183,7 +183,26 @@ export function Header() {
 
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
-                <div className="lg:hidden fixed inset-0 top-[120px] bg-white z-40 overflow-y-auto">
+                <div className="lg:hidden fixed inset-0 z-50 bg-white overflow-y-auto animate-in slide-in-from-right-10 duration-200">
+                    <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                        <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Image
+                                src="/logo.png"
+                                alt="Siphonet"
+                                width={150}
+                                height={30}
+                                style={{ width: 'auto', height: 'auto' }}
+                                className="h-8"
+                            />
+                        </Link>
+                        <button
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="p-2 text-slate-500 hover:text-red-500 transition-colors"
+                        >
+                            <X className="h-6 w-6" />
+                        </button>
+                    </div>
+
                     <nav className="container mx-auto px-4 py-6 space-y-4">
                         <Link
                             href="/"
@@ -194,7 +213,7 @@ export function Header() {
                         </Link>
 
                         {/* Mobile Products Section */}
-                        <div className="border-t pt-3">
+                        <div className="border-t border-slate-100 pt-3">
                             <Link
                                 href="/san-pham"
                                 className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors"
@@ -209,10 +228,12 @@ export function Header() {
                                         <Link
                                             key={category.id}
                                             href={`/san-pham?category=${category.slug}`}
-                                            className="flex items-center gap-2 py-2 text-sm text-slate-600 hover:text-accent transition-colors"
+                                            className="flex items-center gap-3 py-2 text-sm text-slate-600 hover:text-accent transition-colors"
                                             onClick={() => setIsMobileMenuOpen(false)}
                                         >
-                                            <IconComponent className="h-4 w-4" />
+                                            <div className="p-1.5 bg-slate-50 rounded-md">
+                                                <IconComponent className="h-4 w-4 text-slate-500" />
+                                            </div>
                                             {category.name}
                                         </Link>
                                     )
@@ -222,11 +243,12 @@ export function Header() {
 
                         <Link
                             href="/du-an"
-                            className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors border-t pt-3"
+                            className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors border-t border-slate-100 pt-3"
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
                             Dự án
                         </Link>
+                        {/* Other links... */}
                         <Link
                             href="/dich-vu"
                             className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors"
@@ -256,13 +278,24 @@ export function Header() {
                             Liên hệ
                         </Link>
 
-                        <Link
-                            href="/bao-gia"
-                            className="block mt-4 px-6 py-3 bg-accent text-white text-center font-semibold rounded-lg"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Yêu cầu báo giá
-                        </Link>
+                        <div className="pt-4 mt-4 border-t border-slate-100">
+                            <div className="grid grid-cols-2 gap-3">
+                                <Link
+                                    href="/bao-gia"
+                                    className="px-4 py-3 bg-accent text-white text-center font-medium rounded-lg hover:bg-accent-600 transition-colors"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    Báo giá
+                                </Link>
+                                <a
+                                    href="tel:02432001234"
+                                    className="px-4 py-3 bg-slate-100 text-slate-700 text-center font-medium rounded-lg hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Phone className="h-4 w-4" />
+                                    Gọi ngay
+                                </a>
+                            </div>
+                        </div>
                     </nav>
                 </div>
             )}
