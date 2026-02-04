@@ -1,162 +1,191 @@
-# Siphonet Website - Supabase Setup Guide
+# Supabase Database Setup Guide
 
-## Bước 1: Tạo Supabase Project
+## 📋 Mục lục
+1. [Tạo Project Supabase](#1-tạo-project-supabase)
+2. [Chạy Migration](#2-chạy-migration)
+3. [Seed Data](#3-seed-data)
+4. [Cấu hình Environment Variables](#4-cấu-hình-environment-variables)
+5. [Kết nối Database](#5-kết-nối-database)
 
-1. Truy cập https://supabase.com
-2. Đăng nhập hoặc tạo tài khoản mới
-3. Click "New Project"
-4. Điền thông tin:
-   - **Project Name**: `siphonet-website`
-   - **Database Password**: Tạo password mạnh (lưu lại!)
-   - **Region**: Singapore (gần Việt Nam nhất)
-   - **Pricing Plan**: Free (đủ cho start-up)
+---
 
-## Bước 2: Lấy Database Connection String
+## 1. Tạo Project Supabase
 
-1. Trong project dashboard, vào **Settings** → **Database**
-2. Tìm section "Connection string"
-3. Chọn "URI" tab
-4. Copy connection string, format:
-   ```
-   postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
-   ```
-5. Thay `[YOUR-PASSWORD]` bằng password bạn đã tạo
-6. Paste vào file `.env` với key `DATABASE_URL`
+### Bước 1: Tạo tài khoản
+1. Truy cập [https://supabase.com](https://supabase.com)
+2. Đăng ký tài khoản miễn phí (có thể dùng GitHub)
 
-## Bước 3: Lấy Supabase API Keys
+### Bước 2: Tạo Project mới
+1. Click "New Project"
+2. Điền thông tin:
+   - **Name**: siphonet-database (hoặc tên bạn muốn)
+   - **Database Password**: Tạo mật khẩu mạnh và lưu lại
+   - **Region**: Southeast Asia (Singapore) - gần Việt Nam nhất
+   - **Pricing Plan**: Free (đủ cho development)
+3. Click "Create new project"
+4. Đợi 2-3 phút để Supabase khởi tạo database
 
-1. Vào **Settings** → **API**
-2. Copy 2 keys sau:
-   - **Project URL**: `https://[PROJECT-REF].supabase.co`
-   - **anon/public key**: Key dài bắt đầu bằng `eyJ...`
+---
 
-3. Thêm vào file `.env`:
-   ```bash
-   NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT-REF].supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-   ```
+## 2. Chạy Migration
 
-## Bước 4: Tạo Storage Bucket cho Images
+### Option A: Qua Supabase Dashboard (Khuyến nghị cho lần đầu)
 
-1. Trong dashboard, vào **Storage**
-2. Click "Create a new bucket"
-3. Tạo các buckets:
-   - **Name**: `products` (cho ảnh sản phẩm)
-   - **Public**: ✅ Checked
-   - Click "Save"
-   
-4. Lặp lại cho:
-   - `projects` (ảnh dự án)
-   - `posts` (ảnh blog)
-   - `team` (ảnh team members)
+1. Vào project vừa tạo
+2. Click "SQL Editor" trong sidebar bên trái
+3. Click "New Query"
+4. Copy toàn bộ nội dung file `supabase/migrations/001_initial_schema.sql`
+5. Paste vào SQL Editor
+6. Click "Run" (hoặc Ctrl+Enter)
+7. Kiểm tra kết quả: Nếu thành công sẽ thấy "Success. No rows returned"
 
-## Bước 5: Cấu hình Row Level Security (RLS)
+### Option B: Qua CLI (Advanced)
 
-### Cho Public Buckets (products, projects, posts, team):
+```bash
+# Install Supabase CLI
+npm install -g supabase
 
-1. Vào **Storage** → chọn bucket → **Policies**
-2. Click "New Policy"
-3. Tạo policy "Public Read Access":
-   ```sql
-   -- Policy Name: Public Read Access
-   -- Allowed operation: SELECT
-   
-   CREATE POLICY "Public can read" 
-   ON storage.objects FOR SELECT 
-   USING (bucket_id = 'products');
-   ```
+# Login
+supabase login
 
-4. Tạo policy "Authenticated Upload":
-   ```sql
-   -- Policy Name: Authenticated users can upload
-   -- Allowed operation: INSERT
-   
-   CREATE POLICY "Auth users can upload" 
-   ON storage.objects FOR INSERT 
-   WITH CHECK (
-     bucket_id = 'products' 
-     AND auth.role() = 'authenticated'
-   );
-   ```
+# Link to your project
+supabase link --project-ref your-project-ref
 
-5. Lặp lại cho các buckets khác
-
-## Bước 6: Test Connection
-
-Tạo file test `test-supabase.js`:
-
-```javascript
-const { createClient } = require('@supabase/supabase-js')
-
-const supabaseUrl = 'YOUR_SUPABASE_URL'
-const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-async function testConnection() {
-  const { data, error } = await supabase
-    .from('_supabase_migrations')
-    .select('*')
-    .limit(1)
-  
-  if (error) {
-    console.error('❌ Connection failed:', error)
-  } else {
-    console.log('✅ Supabase connected successfully!')
-  }
-}
-
-testConnection()
+# Run migrations
+supabase db push
 ```
 
-Chạy: `node test-supabase.js`
+---
 
-## Bước 7: File `.env` Hoàn chỉnh
+## 3. Seed Data
 
-Tạo file `.env` (copy từ `.env.example`):
+### Chạy Seed Script
+
+1. Vào "SQL Editor" trong Supabase Dashboard
+2. Click "New Query"
+3. Copy toàn bộ nội dung file `supabase/seed.sql`
+4. Paste và click "Run"
+5. Kiểm tra data:
+   - Click "Table Editor" trong sidebar
+   - Chọn table `categories` - Sẽ thấy 3 categories
+   - Chọn table `products` - Sẽ thấy 3 products mẫu
+
+---
+
+## 4. Cấu hình Environment Variables
+
+### Lấy API Keys
+
+1. Trong Supabase Dashboard, click Settings (biểu tượng ⚙️)
+2. Click "API" trong sidebar
+3. Copy các thông tin sau:
+
+#### Project URL
+```
+URL: https://xxxxxxxxxxx.supabase.co
+```
+
+#### API Keys
+- **anon/public key**: Dùng cho client-side
+- **service_role key**: Dùng cho server-side (GIỮ BÍ MẬT!)
+
+### Tạo file .env.local
+
+1. Trong folder project, tạo file `.env.local`
+2. Copy nội dung từ `.env.example`
+3. Điền thông tin từ Supabase:
 
 ```bash
 # Supabase
-DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
-NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT-REF].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
-# Payload CMS
-PAYLOAD_SECRET=your-super-secret-32-char-minimum
-PAYLOAD_ADMIN_EMAIL=admin@siphonet.com
-PAYLOAD_ADMIN_PASSWORD=your-strong-password
-
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# PayOS (điền sau)
-PAYOS_CLIENT_ID=
-PAYOS_API_KEY=
-PAYOS_CHECKSUM_KEY=
-
-# Email (điền sau)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=
-SMTP_PASS=
+# Database Connection String (for Drizzle migrations)
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.your-project-id.supabase.co:5432/postgres
 ```
 
-## ✅ Checklist
+**Lưu ý**: Replace `[YOUR-PASSWORD]` với database password bạn đã tạo ở bước 1.
 
-- [ ] Đã tạo Supabase project
-- [ ] Đã copy DATABASE_URL vào .env
-- [ ] Đã copy SUPABASE_URL và ANON_KEY vào .env
-- [ ] Đã tạo 4 storage buckets (products, projects, posts, team)
-- [ ] Đã cấu hình RLS policies cho public read
-- [ ] Đã test connection thành công
+### Lấy Database Connection String
 
-## 🎯 Tiếp theo
+1. Trong Settings → Database
+2. Scroll xuống phần "Connection string"
+3. Chọn tab "URI"
+4. Copy string và replace `[YOUR-PASSWORD]`
 
-Sau khi setup xong, quay lại terminal và chạy:
+---
+
+## 5. Kết nối Database
+
+### Test Connection
 
 ```bash
-pnpm run dev
+# Install dependencies
+pnpm install
+
+# Test connection
+pnpm db:studio
 ```
 
-Truy cập http://localhost:3000 để xem website!
+### Verify Tables
 
-Dashboard Payload CMS sẽ ở: http://localhost:3000/admin
+1. Vào Supabase Dashboard → Table Editor
+2. Kiểm tra các tables đã được tạo:
+   - ✅ categories
+   - ✅ products
+   - ✅ projects
+   - ✅ services
+   - ✅ posts
+   - ✅ orders
+   - ✅ pages
+   - ✅ reviews
+   - ✅ faqs
+   - ✅ team_members
+   - ✅ testimonials
+   - ✅ quote_requests
+   - ✅ admin_users
+
+---
+
+## 📊 Database Schema Overview
+
+### Core Tables
+
+#### **categories**
+- Danh mục sản phẩm
+- Support parent-child relationship (categories con)
+
+#### **products**
+- Sản phẩm với thông số kỹ thuật (JSONB)
+- Liên kết với categories
+- Hỗ trợ SEO metadata
+
+#### **orders**
+- Đơn hàng từ khách hàng
+- Tích hợp PayOS payment gateway
+- Order tracking status
+
+#### **quote_requests**
+- Yêu cầu báo giá từ form
+- Status tracking cho sales team
+
+#### **reviews**
+- Đánh giá sản phẩm từ khách hàng
+- Moderation workflow
+
+---
+
+## ⚠️ Important Notes
+
+1. **Keep service_role key SECRET** - Không commit vào Git
+2. **Database Password** - Lưu ở nơi an toàn
+3. **Free Tier Limits**:
+   - 500 MB database storage
+   - 1 GB file storage
+   - 50,000 monthly active users
+4. **Backups**: Supabase auto-backup daily (keep 7 days on free tier)
+
+---
+
+**Happy coding! 🎉**
