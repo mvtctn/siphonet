@@ -5,104 +5,89 @@ INSERT INTO categories (name, slug, description, icon) VALUES
 ('Thiết bị Xử Lý Nước', 'thiet-bi-xu-ly-nuoc', 'Hệ thống RO, thiết bị lọc nước, xử lý nước thải', 'Waves')
 ON CONFLICT (slug) DO NOTHING;
 
--- Seed Sample Products
-WITH category_ids AS (
-    SELECT id, slug FROM categories
-)
-INSERT INTO products (
-    name, 
-    slug, 
-    description, 
-    technical_specifications,
-    price, 
-    stock, 
-    sku, 
-    category_id,
-    images,
-    featured,
-    status
-)
-SELECT 
-    'Bơm ly tâm Grundfos CR3-36',
-    'bom-ly-tam-grundfos-cr3-36',
-    'Bơm ly tâm trục đứng Grundfos CR3-36 - Hàng chính hãng nhập khẩu từ Đan Mạch. Thiết kế compact, hiệu suất cao, phù hợp cho các công trình dân dụng và công nghiệp nhỏ.',
-    '[
-        {"parameter": "Lưu lượng", "value": "3", "unit": "m³/h"},
-        {"parameter": "Cột áp", "value": "36", "unit": "m"},
-        {"parameter": "Công suất", "value": "1.5", "unit": "kW"},
-        {"parameter": "Điện áp", "value": "380", "unit": "V"}
-    ]'::jsonb,
-    15500000,
-    5,
-    'GRF-CR3-36',
-    (SELECT id FROM category_ids WHERE slug = 'thiet-bi-cap-nuoc'),
-    '[]'::jsonb,
-    true,
-    'published'
-WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'bom-ly-tam-grundfos-cr3-36');
+-- Seed Sample Products (Insert all at once to avoid CTE scope issues)
+DO $$
+DECLARE
+    cat_co_dien UUID;
+    cat_cap_nuoc UUID;
+    cat_xu_ly_nuoc UUID;
+BEGIN
+    -- Get category IDs
+    SELECT id INTO cat_co_dien FROM categories WHERE slug = 'thiet-bi-co-dien';
+    SELECT id INTO cat_cap_nuoc FROM categories WHERE slug = 'thiet-bi-cap-nuoc';
+    SELECT id INTO cat_xu_ly_nuoc FROM categories WHERE slug = 'thiet-bi-xu-ly-nuoc';
 
-INSERT INTO products (
-    name, 
-    slug, 
-    description, 
-    technical_specifications,
-    price, 
-    stock, 
-    sku, 
-    category_id,
-    images,
-    featured,
-    status
-)
-SELECT 
-    'Hệ thống RO công nghiệp 500L/h',
-    'he-thong-ro-cong-nghiep-500l',
-    'Hệ thống lọc nước RO công nghiệp công suất 500 lít/giờ. Màng lọc RO Filmtec USA, khung inox 304, bảng điều khiển tự động. Phù hợp cho nhà máy, khách sạn, bệnh viện.',
-    '[
-        {"parameter": "Công suất", "value": "500", "unit": "L/h"},
-        {"parameter": "Số màng RO", "value": "2", "unit": "cây"},
-        {"parameter": "Áp lực hoạt động", "value": "3-8", "unit": "bar"},
-        {"parameter": "Tỷ lệ thu hồi", "value": "60", "unit": "%"}
-    ]'::jsonb,
-    45000000,
-    2,
-    'RO-500L-IND',
-    (SELECT id FROM category_ids WHERE slug = 'thiet-bi-xu-ly-nuoc'),
-    '[]'::jsonb,
-    true,
-    'published'
-WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'he-thong-ro-cong-nghiep-500l');
+    -- Insert Product 1
+    INSERT INTO products (
+        name, slug, description, technical_specifications, price, stock, sku, 
+        category_id, images, featured, status
+    )
+    SELECT 
+        'Bơm ly tâm Grundfos CR3-36',
+        'bom-ly-tam-grundfos-cr3-36',
+        'Bơm ly tâm trục đứng Grundfos CR3-36 - Hàng chính hãng nhập khẩu từ Đan Mạch. Thiết kế compact, hiệu suất cao, phù hợp cho các công trình dân dụng và công nghiệp nhỏ.',
+        '[
+            {"parameter": "Lưu lượng", "value": "3", "unit": "m³/h"},
+            {"parameter": "Cột áp", "value": "36", "unit": "m"},
+            {"parameter": "Công suất", "value": "1.5", "unit": "kW"},
+            {"parameter": "Điện áp", "value": "380", "unit": "V"}
+        ]'::jsonb,
+        15500000,
+        5,
+        'GRF-CR3-36',
+        cat_cap_nuoc,
+        '[]'::jsonb,
+        true,
+        'published'
+    WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'bom-ly-tam-grundfos-cr3-36');
 
-INSERT INTO products (
-    name, 
-    slug, 
-    description, 
-    technical_specifications,
-    price, 
-    stock, 
-    sku, 
-    category_id,
-    images,
-    featured,
-    status
-)
-SELECT 
-    'Bơm nước thải Ebara 3M 32-160',
-    'bom-nuoc-thai-ebara-3m-32-160',
-    'Bơm nước thải Ebara 3M 32-160 - Thiết kế chịu được chất thải có tạp chất. Vỏ gang chất lượng cao, trục inox 304. Phù hợp cho hệ thống thoát nước, xử lý nước thải.',
-    '[
-        {"parameter": "Lưu lượng", "value": "32", "unit": "m³/h"},
-        {"parameter": "Cột áp", "value": "20", "unit": "m"},
-        {"parameter": "Công suất", "value": "0.75", "unit": "kW"}
-    ]'::jsonb,
-    8900000,
-    10,
-    'EBR-3M32-160',
-    (SELECT id FROM category_ids WHERE slug = 'thiet-bi-cap-nuoc'),
-    '[]'::jsonb,
-    true,
-    'published'
-WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'bom-nuoc-thai-ebara-3m-32-160');
+    -- Insert Product 2
+    INSERT INTO products (
+        name, slug, description, technical_specifications, price, stock, sku, 
+        category_id, images, featured, status
+    )
+    SELECT 
+        'Hệ thống RO công nghiệp 500L/h',
+        'he-thong-ro-cong-nghiep-500l',
+        'Hệ thống lọc nước RO công nghiệp công suất 500 lít/giờ. Màng lọc RO Filmtec USA, khung inox 304, bảng điều khiển tự động. Phù hợp cho nhà máy, khách sạn, bệnh viện.',
+        '[
+            {"parameter": "Công suất", "value": "500", "unit": "L/h"},
+            {"parameter": "Số màng RO", "value": "2", "unit": "cây"},
+            {"parameter": "Áp lực hoạt động", "value": "3-8", "unit": "bar"},
+            {"parameter": "Tỷ lệ thu hồi", "value": "60", "unit": "%"}
+        ]'::jsonb,
+        45000000,
+        2,
+        'RO-500L-IND',
+        cat_xu_ly_nuoc,
+        '[]'::jsonb,
+        true,
+        'published'
+    WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'he-thong-ro-cong-nghiep-500l');
+
+    -- Insert Product 3
+    INSERT INTO products (
+        name, slug, description, technical_specifications, price, stock, sku, 
+        category_id, images, featured, status
+    )
+    SELECT 
+        'Bơm nước thải Ebara 3M 32-160',
+        'bom-nuoc-thai-ebara-3m-32-160',
+        'Bơm nước thải Ebara 3M 32-160 - Thiết kế chịu được chất thải có tạp chất. Vỏ gang chất lượng cao, trục inox 304. Phù hợp cho hệ thống thoát nước, xử lý nước thải.',
+        '[
+            {"parameter": "Lưu lượng", "value": "32", "unit": "m³/h"},
+            {"parameter": "Cột áp", "value": "20", "unit": "m"},
+            {"parameter": "Công suất", "value": "0.75", "unit": "kW"}
+        ]'::jsonb,
+        8900000,
+        10,
+        'EBR-3M32-160',
+        cat_cap_nuoc,
+        '[]'::jsonb,
+        true,
+        'published'
+    WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'bom-nuoc-thai-ebara-3m-32-160');
+END $$;
 
 -- Seed Admin User (password: admin123)
 -- Note: In production, use proper bcrypt hash
