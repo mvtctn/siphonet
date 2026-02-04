@@ -125,6 +125,13 @@ export default function AdminProductsPage() {
                         Quản lý danh mục
                     </Link>
                     <Link
+                        href="/admin/products/featured"
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-yellow-200 text-yellow-700 rounded-lg hover:bg-yellow-50 transition-all font-medium shadow-sm"
+                    >
+                        <Star size={16} fill="currentColor" />
+                        Sản phẩm nổi bật
+                    </Link>
+                    <Link
                         href="/admin/products/create"
                         className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-all shadow-md shadow-primary/20 font-medium"
                     >

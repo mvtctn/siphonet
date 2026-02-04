@@ -61,8 +61,8 @@ export function ContactPage() {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-primary mb-2">Điện thoại</h3>
-                                    <p className="text-slate-600">024 3200 1234</p>
-                                    <p className="text-slate-600">0909 123 456</p>
+                                    <p className="text-slate-600">0913 381 683</p>
+                                    <p className="text-slate-600">0914 427 463</p>
                                 </div>
                             </div>
                         </div>

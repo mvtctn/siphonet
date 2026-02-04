@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, Users, Settings, Tag, FileText, Layers, ChevronLeft, ChevronRight, MessageSquare, Mail } from 'lucide-react'
+import { LayoutDashboard, Package, Users, Settings, Tag, FileText, Layers, ChevronLeft, ChevronRight, MessageSquare, Mail, Star } from 'lucide-react'
 import { useState } from 'react'
 
 export function AdminSidebar() {
@@ -20,6 +20,7 @@ export function AdminSidebar() {
             title: 'Quản lý nội dung',
             items: [
                 { href: '/admin/products', label: 'Sản phẩm', icon: Package },
+                { href: '/admin/products/featured', label: 'Sản phẩm nổi bật', icon: Star },
                 { href: '/admin/posts', label: 'Bài viết (Blog)', icon: FileText },
                 { href: '/admin/pages', label: 'Trang tĩnh', icon: Layers },
             ]
