@@ -24,7 +24,23 @@ export async function POST(request: NextRequest) {
             .eq('email', email)
             .single()
 
-        if (error || !user) {
+        if (error) {
+            console.error('Database error during login:', error)
+            // Identify connection issues specifically
+            if (error.message.includes('fetch failed') || error.code === 'PGRST102') {
+                return NextResponse.json(
+                    { error: 'Không thể kết nối tới cơ sở dữ liệu. Vui lòng kiểm tra cấu hình môi trường.' },
+                    { status: 500 }
+                )
+            }
+
+            return NextResponse.json(
+                { error: 'Email hoặc mật khẩu không đúng' },
+                { status: 401 }
+            )
+        }
+
+        if (!user) {
             return NextResponse.json(
                 { error: 'Email hoặc mật khẩu không đúng' },
                 { status: 401 }
