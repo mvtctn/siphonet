@@ -34,9 +34,9 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
 
-        // Basic validation
-        if (!body.name || body.price === undefined || body.price === null) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+        // Basic validation - check name exists and price is provided (can be 0)
+        if (!body.name || body.price === undefined || body.price === null || body.price === '') {
+            return NextResponse.json({ error: 'Missing required fields (name and price are required)' }, { status: 400 })
         }
 
         // Generate slug from name if not provided
@@ -47,13 +47,21 @@ export async function POST(request: NextRequest) {
             .replace(/-+/g, "-")
             .replace(/^-|-$/g, "");
 
+        const { old_price, seo_metadata, ...postData } = body
+
+        // Map SEO metadata if available
+        const finalData = {
+            ...postData,
+            meta_title: seo_metadata?.title || null,
+            meta_description: seo_metadata?.description || null,
+            keywords: seo_metadata?.keywords || null,
+            slug,
+            updated_at: new Date().toISOString()
+        }
+
         const { data, error } = await supabaseAdmin
             .from('products')
-            .insert({
-                ...body,
-                slug,
-                updated_at: new Date().toISOString() // Trigger auto update anyway
-            })
+            .insert(finalData)
             .select()
             .single()
 
@@ -71,16 +79,22 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { id, ...updates } = body
+        const { id, old_price, seo_metadata, ...updates } = body
+
+        // Map SEO metadata if available
+        const finalUpdates = {
+            ...updates,
+            meta_title: seo_metadata?.title || undefined,
+            meta_description: seo_metadata?.description || undefined,
+            keywords: seo_metadata?.keywords || undefined,
+            updated_at: new Date().toISOString()
+        }
 
         if (!id) return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
 
         const { data, error } = await supabaseAdmin
             .from('products')
-            .update({
-                ...updates,
-                updated_at: new Date().toISOString()
-            })
+            .update(finalUpdates)
             .eq('id', id)
             .select()
             .single()
