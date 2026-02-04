@@ -38,7 +38,7 @@ for (let i = 1; i <= 15; i++) {
         stock: 10,
         sku: `RO-SYS-${i}`,
         category_id: categories.waterTreatment,
-        images: [`https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=800&sig=${i}`],
+        images: [`https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&q=80`],
         featured: i % 5 === 0,
         status: 'published'
     });
@@ -60,7 +60,7 @@ for (let i = 1; i <= 15; i++) {
         stock: 5,
         sku: `JKS-TANK-${i}`,
         category_id: categories.waterTreatment,
-        images: [`https://images.unsplash.com/photo-1542013936693-884638324252?auto=format&fit=crop&q=80&w=800&sig=${i}`],
+        images: [`https://images.unsplash.com/photo-1542013936693-884638324252?w=800&q=80`],
         featured: i % 4 === 0,
         status: 'published'
     });
@@ -82,7 +82,7 @@ for (let i = 1; i <= 10; i++) {
         stock: 3,
         sku: `SWRO-${i}`,
         category_id: categories.waterTreatment,
-        images: [`https://images.unsplash.com/photo-1584467541268-b040f83be3fd?auto=format&fit=crop&q=80&w=800&sig=${i}`],
+        images: [`https://images.unsplash.com/photo-1584467541268-b040f83be3fd?w=800&q=80`],
         featured: i % 3 === 0,
         status: 'published'
     });
@@ -104,13 +104,25 @@ for (let i = 1; i <= 10; i++) {
         stock: 50,
         sku: `SPH-DRN-${i}`,
         category_id: categories.siphonic,
-        images: [`https://images.unsplash.com/photo-1617415254101-700140237d6a?auto=format&fit=crop&q=80&w=800&sig=${i}`],
+        images: [`https://images.unsplash.com/photo-1617415254101-700140237d6a?w=800&q=80`],
         featured: i % 2 === 0,
         status: 'published'
     });
 }
 
 async function seed() {
+    console.log('🧹 Cleaning up old sample products...');
+    const { error: deleteError } = await supabase
+        .from('products')
+        .delete()
+        .or('sku.ilike.RO-SYS-%,sku.ilike.JKS-TANK-%,sku.ilike.SWRO-%,sku.ilike.SPH-DRN-%');
+
+    if (deleteError) {
+        console.error('❌ Error cleaning up:', deleteError.message);
+    } else {
+        console.log('✅ Cleaned up old samples');
+    }
+
     console.log(`🚀 Starting to seed ${products.length} products...`);
 
     // Insert in batches of 10 to be safe

@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, Eye, Star, Package, TrendingUp } from 'lucide-react'
+import { ShoppingCart, Eye, Star, Package, TrendingUp, ImageOff } from 'lucide-react'
 
 interface ProductCardProps {
     product: {
@@ -24,6 +25,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
+    const [imgError, setImgError] = useState(false)
     const formattedPrice = new Intl.NumberFormat('vi-VN').format(product.price)
     const rating = product.rating || 0
     const fullStars = Math.floor(rating)
@@ -35,19 +37,20 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
                 <div className="flex flex-col md:flex-row">
                     {/* Image */}
                     <div className="relative md:w-64 aspect-square md:aspect-auto bg-slate-100 overflow-hidden flex-shrink-0">
-                        {product.images && product.images.length > 0 && product.images[0] ? (
+                        {product.images && product.images.length > 0 && product.images[0] && !imgError ? (
                             <Image
                                 src={product.images[0]}
                                 alt={product.name}
                                 fill
                                 className="object-cover transition-transform duration-500 group-hover:scale-110"
                                 sizes="(max-width: 768px) 100vw, 256px"
+                                onError={() => setImgError(true)}
                             />
                         ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-400">
+                            <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400">
                                 <div className="text-center">
-                                    <Eye className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                                    <p className="text-sm">Hình ảnh</p>
+                                    <ImageOff className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                                    <p className="text-xs font-medium">No Image</p>
                                 </div>
                             </div>
                         )}
@@ -144,19 +147,20 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
             {/* Image */}
             {/* Image */}
             <div className="relative aspect-square bg-slate-100 overflow-hidden">
-                {product.images && product.images.length > 0 && product.images[0] ? (
+                {product.images && product.images.length > 0 && product.images[0] && !imgError ? (
                     <Image
                         src={product.images[0]}
                         alt={product.name}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        onError={() => setImgError(true)}
                     />
                 ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-400">
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400">
                         <div className="text-center">
-                            <Eye className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                            <p className="text-sm">Hình ảnh sản phẩm</p>
+                            <ImageOff className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                            <p className="text-xs font-medium">No Image Available</p>
                         </div>
                     </div>
                 )}
