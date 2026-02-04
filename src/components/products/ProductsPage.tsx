@@ -321,7 +321,7 @@ export function ProductsPage() {
                                 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
                                 : 'grid-cols-1'
                                 }`}>
-                                {products.map((product, index) => (
+                                {products.map((product: any, index: number) => (
                                     <div
                                         key={product.id}
                                         className="animate-fade-in"

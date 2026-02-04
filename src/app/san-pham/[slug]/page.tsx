@@ -66,7 +66,7 @@ export default async function ProductDetailPage({
         .neq('id', product.id)
         .limit(4)
 
-    const relatedProducts = relatedProductsData?.map(p => ({
+    const relatedProducts = relatedProductsData?.map((p: any) => ({
         id: p.id,
         name: p.name,
         slug: p.slug,

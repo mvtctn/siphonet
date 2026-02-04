@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Transform data to match frontend interface
-        const transformedProducts = products?.map(product => ({
+        const transformedProducts = products?.map((product: any) => ({
             id: product.id,
             name: product.name,
             slug: product.slug,

@@ -16,7 +16,7 @@ export async function FeaturedProductsSection() {
         .limit(6)
 
     // Transform data
-    const featuredProducts = featuredProductsData?.map(p => ({
+    const featuredProducts = featuredProductsData?.map((p: any) => ({
         id: p.id,
         name: p.name,
         slug: p.slug,
@@ -51,7 +51,7 @@ export async function FeaturedProductsSection() {
                 {/* Products Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                     {featuredProducts.length > 0 ? (
-                        featuredProducts.map((product) => (
+                        featuredProducts.map((product: any) => (
                             <ProductCard key={product.id} product={product} />
                         ))
                     ) : (

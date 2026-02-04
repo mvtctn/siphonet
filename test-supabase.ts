@@ -22,7 +22,7 @@ async function testSupabaseConnection() {
         console.log('✅ Categories fetched successfully!')
         console.log('📦 Count:', categories?.length || 0)
         if (categories && categories.length > 0) {
-            console.log('📋 Categories:', categories.map(c => c.name).join(', '))
+            console.log('📋 Categories:', categories.map((c: any) => c.name).join(', '))
         }
     }
 
@@ -42,7 +42,7 @@ async function testSupabaseConnection() {
         console.log('✅ Products fetched successfully!')
         console.log('📦 Count:', products?.length || 0)
         if (products && products.length > 0) {
-            products.forEach(p => {
+            products.forEach((p: any) => {
                 console.log(`  - ${p.name} | Price: ${p.price} | Stock: ${p.stock}`)
             })
         }
