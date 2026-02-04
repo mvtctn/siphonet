@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json()
 
         // Basic validation
-        if (!body.name || !body.price) {
+        if (!body.name || body.price === undefined || body.price === null) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
