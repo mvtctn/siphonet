@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { slug: string } }
+    props: { params: Promise<{ slug: string }> }
 ) {
     try {
+        const params = await props.params;
         const slug = params.slug
 
         const { data: product, error } = await supabase

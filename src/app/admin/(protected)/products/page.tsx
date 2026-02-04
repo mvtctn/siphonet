@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, Filter, Edit, Trash2, Image as ImageIcon, Package, Tag, Loader2 } from 'lucide-react'
+import { Plus, Search, Filter, Edit, Trash2, Image as ImageIcon, Package, Tag, Loader2, Settings, Star } from 'lucide-react'
 import { CategoryManager } from '@/components/admin/CategoryManager'
 import Link from 'next/link'
 
@@ -74,146 +74,190 @@ export default function AdminProductsPage() {
         return matchesSearch && matchesCategory
     })
 
+    const updateProductField = async (id: string, field: string, value: any) => {
+        // Optimistic update
+        setProducts(products.map(p => p.id === id ? { ...p, [field]: value } : p))
+
+        try {
+            const res = await fetch('/api/admin/products', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, [field]: value })
+            })
+            const data = await res.json()
+            if (!data.success) {
+                // Revert on failure
+                alert('Cập nhật thất bại: ' + data.error)
+                fetchProducts()
+            }
+        } catch (error) {
+            console.error(error)
+            fetchProducts()
+        }
+    }
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
+    }
+
     return (
-        <div className="p-8 max-w-[1600px] mx-auto">
+        <div className="p-6 max-w-[1600px] mx-auto text-sm">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                         <Package className="text-primary" />
-                        Quản lý Sản phẩm
+                        Danh sách sản phẩm
                     </h1>
-                    <p className="text-slate-500 mt-1">Danh sách sản phẩm và quản lý kho hàng.</p>
+                    <div className="flex items-center gap-2 text-slate-500 mt-1 text-xs">
+                        <Link href="/admin/dashboard" className="hover:text-primary">Trang chủ</Link>
+                        <span>/</span>
+                        <span>Sản phẩm</span>
+                    </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                     <Link
                         href="/admin/categories"
-                        className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-all font-medium"
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-all font-medium shadow-sm"
                     >
-                        <Tag size={18} />
+                        <Tag size={16} />
                         Quản lý danh mục
                     </Link>
                     <Link
                         href="/admin/products/create"
-                        className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-600 transition-all shadow-lg shadow-primary/20 font-medium"
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-all shadow-md shadow-primary/20 font-medium"
                     >
-                        <Plus size={20} />
-                        Thêm sản phẩm
+                        <Plus size={16} />
+                        Thêm mới
                     </Link>
                 </div>
             </div>
 
-            {/* Products Toolbar */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm tên, SKU..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm"
-                    />
-                </div>
-                <div className="flex gap-4">
-                    <div className="relative min-w-[200px]">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-                        <select
-                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none shadow-sm cursor-pointer"
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                        >
-                            <option value="">Tất cả danh mục</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
+            {/* Toolbar */}
+            <div className="bg-white p-4 rounded-t-xl border border-slate-200 border-b-0 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-64">
+                        <input
+                            type="text"
+                            placeholder="Nhập từ khóa tìm kiếm..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-3 pr-10 py-2 bg-white border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                     </div>
+                    <select
+                        className="py-2 pl-3 pr-8 bg-white border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                        <option value="">Chủ đề (Tất cả)</option>
+                        {categories.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button className="px-3 py-2 bg-cyan-600 text-white rounded-md text-sm font-medium hover:bg-cyan-700 transition-colors flex items-center gap-2">
+                        <Package size={14} /> Cập nhật
+                    </button>
                 </div>
             </div>
 
-            {/* Products Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* Table */}
+            <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50 border-b border-slate-200">
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-cyan-600 text-white text-xs uppercase font-semibold">
                             <tr>
-                                <th className="px-6 py-4 font-semibold text-slate-700">Sản phẩm</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700">Danh mục</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700 text-right">Giá bán</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700">Trạng thái</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700 text-right">Thao tác</th>
+                                <th className="px-3 py-3 w-10 text-center border-r border-cyan-500">
+                                    <input type="checkbox" className="rounded border-white/30 text-primary focus:ring-0 cursor-pointer" />
+                                </th>
+                                <th className="px-3 py-3 w-12 text-center border-r border-cyan-500">Stt</th>
+                                <th className="px-3 py-3 w-32 text-center border-r border-cyan-500">Hình ảnh</th>
+                                <th className="px-4 py-3 border-r border-cyan-500">Tên sản phẩm</th>
+                                <th className="px-3 py-3 w-40 text-center border-r border-cyan-500">Đặc điểm</th>
+                                <th className="px-2 py-3 w-20 text-center border-r border-cyan-500" title="Tiêu biểu">Tiêu biểu</th>
+                                <th className="px-2 py-3 w-20 text-center border-r border-cyan-500" title="Hiển thị">Hiển thị</th>
+                                <th className="px-2 py-3 w-24 text-center">Tác vụ</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 text-sm">
                             {loading ? (
-                                <tr><td colSpan={5} className="p-12 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Đang tải...</td></tr>
+                                <tr><td colSpan={8} className="p-12 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Đang tải...</td></tr>
                             ) : filteredProducts.length === 0 ? (
-                                <tr><td colSpan={5} className="p-8 text-center text-slate-500">
-                                    Chưa có sản phẩm nào. <Link href="/admin/products/create" className="text-primary hover:underline">Thêm ngay!</Link>
-                                </td></tr>
+                                <tr><td colSpan={8} className="p-8 text-center text-slate-500">Không tìm thấy sản phẩm nào.</td></tr>
                             ) : (
-                                filteredProducts.map((product) => (
-                                    <tr key={product.id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-16 w-16 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shrink-0 relative bg-white">
-                                                    {product.images && product.images.length > 0 ? (
-                                                        <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
-                                                    ) : (
-                                                        <div className="h-full w-full flex items-center justify-center text-slate-300">
-                                                            <ImageIcon size={24} />
-                                                        </div>
-                                                    )}
-                                                    {product.featured && <div className="absolute top-0 right-0 bg-yellow-400 w-3 h-3 rounded-bl-lg z-10 shadow-sm" title="Nổi bật" />}
-                                                </div>
-                                                <div>
-                                                    <Link href={`/admin/products/${product.id}`} className="font-medium text-slate-900 line-clamp-2 max-w-xs hover:text-primary transition-colors">
-                                                        {product.name}
-                                                    </Link>
-                                                    <div className="text-xs text-slate-500 font-mono mt-1">SKU: {product.sku || '---'}</div>
-                                                </div>
+                                filteredProducts.map((product, index) => (
+                                    <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
+                                        <td className="px-3 py-3 text-center border-r border-slate-100">
+                                            <input type="checkbox" className="rounded border-slate-300 text-primary focus:ring-primary cursor-pointer" />
+                                        </td>
+                                        <td className="px-3 py-3 text-center border-r border-slate-100 font-mono text-slate-500">
+                                            {index + 1}
+                                        </td>
+                                        <td className="px-3 py-3 text-center border-r border-slate-100">
+                                            <div className="h-16 w-16 mx-auto bg-slate-100 rounded border border-slate-200 overflow-hidden flex items-center justify-center">
+                                                {product.images && product.images.length > 0 ? (
+                                                    <img src={product.images[0]} alt={product.name} className="h-full w-full object-contain" />
+                                                ) : (
+                                                    <ImageIcon size={20} className="text-slate-300" />
+                                                )}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
+                                        <td className="px-4 py-3 border-r border-slate-100">
+                                            <Link href={`/admin/products/${product.id}`} className="font-semibold text-slate-700 hover:text-primary mb-1 block line-clamp-2">
+                                                {product.name}
+                                            </Link>
+                                            <div className="text-red-600 font-bold text-sm">
+                                                {formatCurrency(product.price)}
+                                            </div>
+                                            <Link href={`/admin/products/${product.id}`} className="inline-flex items-center gap-1 text-xs text-cyan-600 hover:underline mt-1">
+                                                <Settings size={12} /> Cấu hình tính năng
+                                            </Link>
+                                        </td>
+                                        <td className="px-3 py-3 text-center border-r border-slate-100">
+                                            <div className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded inline-block max-w-[150px] truncate">
                                                 {categories.find(c => c.id === product.category_id)?.name || 'Chưa phân loại'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="font-medium text-slate-900">
-                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
                                             </div>
-                                            {product.old_price && (
-                                                <div className="text-xs text-slate-400 line-through">
-                                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.old_price)}
-                                                </div>
-                                            )}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${product.status === 'published'
-                                                ? 'bg-green-50 text-green-700 border-green-200'
-                                                : 'bg-slate-50 text-slate-600 border-slate-200'
-                                                }`}>
-                                                {product.status === 'published' ? 'Đang bán' : 'Nháp'}
-                                            </span>
+                                        <td className="px-2 py-3 text-center border-r border-slate-100">
+                                            <button
+                                                onClick={() => updateProductField(product.id, 'featured', !product.featured)}
+                                                className={`p-1 rounded hover:bg-slate-100 transition-colors ${product.featured ? 'text-yellow-400' : 'text-slate-200'}`}
+                                                title={product.featured ? 'Đang bật Tiêu biểu' : 'Không tiêu biểu'}
+                                            >
+                                                <Star size={20} fill={product.featured ? "currentColor" : "none"} />
+                                            </button>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <td className="px-2 py-3 text-center border-r border-slate-100">
+                                            <button
+                                                onClick={() => updateProductField(product.id, 'status', product.status === 'published' ? 'draft' : 'published')}
+                                                className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                                                style={{ backgroundColor: product.status === 'published' ? '#0891b2' : '#e2e8f0' }}
+                                            >
+                                                <span
+                                                    className={`${product.status === 'published' ? 'translate-x-6' : 'translate-x-1'
+                                                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                                                />
+                                            </button>
+                                        </td>
+                                        <td className="px-2 py-3 text-center">
+                                            <div className="flex items-center justify-center gap-2">
                                                 <Link
                                                     href={`/admin/products/${product.id}`}
-                                                    className="p-2 text-slate-500 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                                                    className="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded transition-colors border border-cyan-200"
                                                     title="Chỉnh sửa"
                                                 >
-                                                    <Edit size={18} />
+                                                    <Edit size={16} />
                                                 </Link>
                                                 <button
                                                     onClick={() => handleDelete(product.id)}
-                                                    className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors border border-red-200"
                                                     title="Xóa"
                                                 >
-                                                    <Trash2 size={18} />
+                                                    <Trash2 size={16} />
                                                 </button>
                                             </div>
                                         </td>
@@ -223,6 +267,10 @@ export default function AdminProductsPage() {
                         </tbody>
                     </table>
                 </div>
+            </div>
+            {/* Pagination (Static for now as mostly requested) */}
+            <div className="mt-4 flex justify-between items-center text-slate-500 text-xs">
+                <div>Hiển thị {filteredProducts.length} sản phẩm</div>
             </div>
         </div>
     )

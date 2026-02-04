@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Phone, Mail, Menu, ChevronDown, Zap, Droplet, Waves, X, ShoppingBag } from 'lucide-react'
@@ -16,174 +17,182 @@ export function Header() {
         'Waves': Waves,
     }
 
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-            {/* Top Bar */}
-            <div className="bg-primary text-white text-sm">
-                <div className="container mx-auto px-4 py-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-4">
-                            <a href="tel:02432001234" className="flex items-center gap-2 hover:text-accent transition-colors">
-                                <Phone className="h-4 w-4" />
-                                <span>024 3200 1234</span>
-                            </a>
-                            <a href="mailto:siphonetjsc@gmail.com" className="flex items-center gap-2 hover:text-accent transition-colors">
-                                <Mail className="h-4 w-4" />
-                                <span>siphonetjsc@gmail.com</span>
-                            </a>
-                        </div>
-                        <div className="text-xs">
-                            Thứ 2 - Thứ 6: 8:00 - 17:30 | Thứ 7: 8:00 - 12:00
+        <>
+            <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+                {/* Top Bar */}
+                <div className="bg-primary text-white text-sm">
+                    <div className="container mx-auto px-4 py-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-4">
+                                <a href="tel:02432001234" className="flex items-center gap-2 hover:text-accent transition-colors">
+                                    <Phone className="h-4 w-4" />
+                                    <span>024 3200 1234</span>
+                                </a>
+                                <a href="mailto:siphonetjsc@gmail.com" className="flex items-center gap-2 hover:text-accent transition-colors">
+                                    <Mail className="h-4 w-4" />
+                                    <span>siphonetjsc@gmail.com</span>
+                                </a>
+                            </div>
+                            <div className="text-xs">
+                                Thứ 2 - Thứ 6: 8:00 - 17:30 | Thứ 7: 8:00 - 12:00
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Main Header */}
-            <div className="container mx-auto px-4">
-                <div className="flex h-20 items-center justify-between">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center z-50">
-                        <Image
-                            src="/logo.png"
-                            alt="Siphonet"
-                            width={200}
-                            height={40}
-                            priority
-                            style={{ width: 'auto', height: 'auto' }}
-                            className="h-10"
-                        />
-                    </Link>
-
-                    {/* Desktop Navigation */}
-                    <nav className="hidden lg:flex items-center gap-8">
-                        <Link
-                            href="/"
-                            className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
-                        >
-                            Trang chủ
+                {/* Main Header */}
+                <div className="container mx-auto px-4">
+                    <div className="flex h-20 items-center justify-between">
+                        {/* Logo */}
+                        <Link href="/" className="flex items-center z-50">
+                            <Image
+                                src="/logo.png"
+                                alt="Siphonet"
+                                width={200}
+                                height={40}
+                                priority
+                                style={{ width: 'auto', height: 'auto' }}
+                                className="h-10"
+                            />
                         </Link>
 
-                        {/* Products Mega Menu */}
-                        <div
-                            className="relative"
-                            onMouseEnter={() => setIsProductsMenuOpen(true)}
-                            onMouseLeave={() => setIsProductsMenuOpen(false)}
-                        >
+                        {/* Desktop Navigation */}
+                        <nav className="hidden lg:flex items-center gap-8">
                             <Link
-                                href="/san-pham"
-                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors flex items-center gap-1"
+                                href="/"
+                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
                             >
-                                Sản phẩm
-                                <ChevronDown className={`h-4 w-4 transition-transform ${isProductsMenuOpen ? 'rotate-180' : ''}`} />
+                                Trang chủ
                             </Link>
 
-                            {/* Dropdown Menu */}
-                            <div className={`absolute left-1/2 -translate-x-1/2 top-full pt-2 transition-all duration-300 ${isProductsMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
-                                }`}>
-                                <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 min-w-[500px]">
-                                    <div className="grid grid-cols-1 gap-2">
-                                        {/* All Products Link */}
-                                        <Link
-                                            href="/san-pham"
-                                            className="flex items-center gap-3 p-4 rounded-xl hover:bg-gradient-to-r hover:from-accent/10 hover:to-accent/5 transition-all group"
-                                        >
-                                            <div className="p-3 bg-gradient-to-br from-accent to-accent-600 rounded-lg group-hover:scale-110 transition-transform">
-                                                <ShoppingBag className="h-5 w-5 text-white" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-slate-900 group-hover:text-accent transition-colors">
-                                                    Tất cả sản phẩm
-                                                </h3>
-                                                <p className="text-xs text-slate-500">Xem toàn bộ danh mục</p>
-                                            </div>
-                                        </Link>
+                            {/* Products Mega Menu */}
+                            <div
+                                className="relative"
+                                onMouseEnter={() => setIsProductsMenuOpen(true)}
+                                onMouseLeave={() => setIsProductsMenuOpen(false)}
+                            >
+                                <Link
+                                    href="/san-pham"
+                                    className="text-sm font-medium text-slate-700 hover:text-accent transition-colors flex items-center gap-1"
+                                >
+                                    Sản phẩm
+                                    <ChevronDown className={`h-4 w-4 transition-transform ${isProductsMenuOpen ? 'rotate-180' : ''}`} />
+                                </Link>
 
-                                        {/* Category Links */}
-                                        {mockCategories.map((category) => {
-                                            const IconComponent = categoryIcons[category.icon || 'Zap']
-                                            return (
-                                                <Link
-                                                    key={category.id}
-                                                    href={`/san-pham?category=${category.slug}`}
-                                                    className="flex items-center gap-3 p-4 rounded-xl hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all group"
-                                                >
-                                                    <div className="p-3 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-lg group-hover:scale-110 transition-transform">
-                                                        <IconComponent className="h-5 w-5 text-primary" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h3 className="font-bold text-slate-900 group-hover:text-primary transition-colors">
-                                                            {category.name}
-                                                        </h3>
-                                                        <p className="text-xs text-slate-500 line-clamp-1">{category.description}</p>
-                                                    </div>
-                                                </Link>
-                                            )
-                                        })}
+                                {/* Dropdown Menu */}
+                                <div className={`absolute left-1/2 -translate-x-1/2 top-full pt-2 transition-all duration-300 ${isProductsMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
+                                    }`}>
+                                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 min-w-[500px]">
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {/* All Products Link */}
+                                            <Link
+                                                href="/san-pham"
+                                                className="flex items-center gap-3 p-4 rounded-xl hover:bg-gradient-to-r hover:from-accent/10 hover:to-accent/5 transition-all group"
+                                            >
+                                                <div className="p-3 bg-gradient-to-br from-accent to-accent-600 rounded-lg group-hover:scale-110 transition-transform">
+                                                    <ShoppingBag className="h-5 w-5 text-white" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="font-bold text-slate-900 group-hover:text-accent transition-colors">
+                                                        Tất cả sản phẩm
+                                                    </h3>
+                                                    <p className="text-xs text-slate-500">Xem toàn bộ danh mục</p>
+                                                </div>
+                                            </Link>
+
+                                            {/* Category Links */}
+                                            {mockCategories.map((category) => {
+                                                const IconComponent = categoryIcons[category.icon || 'Zap']
+                                                return (
+                                                    <Link
+                                                        key={category.id}
+                                                        href={`/san-pham?category=${category.slug}`}
+                                                        className="flex items-center gap-3 p-4 rounded-xl hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all group"
+                                                    >
+                                                        <div className="p-3 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-lg group-hover:scale-110 transition-transform">
+                                                            <IconComponent className="h-5 w-5 text-primary" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <h3 className="font-bold text-slate-900 group-hover:text-primary transition-colors">
+                                                                {category.name}
+                                                            </h3>
+                                                            <p className="text-xs text-slate-500 line-clamp-1">{category.description}</p>
+                                                        </div>
+                                                    </Link>
+                                                )
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+
+                            <Link
+                                href="/du-an"
+                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                            >
+                                Dự án
+                            </Link>
+                            <Link
+                                href="/dich-vu"
+                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                            >
+                                Dịch vụ
+                            </Link>
+                            <Link
+                                href="/tin-tuc"
+                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                            >
+                                Tin tức
+                            </Link>
+                            <Link
+                                href="/gioi-thieu"
+                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                            >
+                                Giới thiệu
+                            </Link>
+                            <Link
+                                href="/lien-he"
+                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                            >
+                                Liên hệ
+                            </Link>
+                        </nav>
+
+                        {/* CTA Button */}
+                        <div className="hidden lg:flex items-center gap-2">
+                            <Link
+                                href="/bao-gia"
+                                className="px-6 py-2.5 bg-accent hover:bg-accent-600 text-white text-sm font-semibold rounded-lg transition-all hover:scale-105 shadow-lg shadow-accent/30"
+                            >
+                                Yêu cầu báo giá
+                            </Link>
                         </div>
 
-                        <Link
-                            href="/du-an"
-                            className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                        {/* Mobile Menu Button */}
+                        <button
+                            className="lg:hidden p-2 text-slate-700 hover:text-accent z-50"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         >
-                            Dự án
-                        </Link>
-                        <Link
-                            href="/dich-vu"
-                            className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
-                        >
-                            Dịch vụ
-                        </Link>
-                        <Link
-                            href="/tin-tuc"
-                            className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
-                        >
-                            Tin tức
-                        </Link>
-                        <Link
-                            href="/gioi-thieu"
-                            className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
-                        >
-                            Giới thiệu
-                        </Link>
-                        <Link
-                            href="/lien-he"
-                            className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
-                        >
-                            Liên hệ
-                        </Link>
-                    </nav>
-
-                    {/* CTA Button */}
-                    <div className="hidden lg:flex items-center gap-2">
-                        <Link
-                            href="/bao-gia"
-                            className="px-6 py-2.5 bg-accent hover:bg-accent-600 text-white text-sm font-semibold rounded-lg transition-all hover:scale-105 shadow-lg shadow-accent/30"
-                        >
-                            Yêu cầu báo giá
-                        </Link>
+                            {isMobileMenuOpen ? (
+                                <X className="h-6 w-6" />
+                            ) : (
+                                <Menu className="h-6 w-6" />
+                            )}
+                        </button>
                     </div>
-
-                    {/* Mobile Menu Button */}
-                    <button
-                        className="lg:hidden p-2 text-slate-700 hover:text-accent z-50"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    >
-                        {isMobileMenuOpen ? (
-                            <X className="h-6 w-6" />
-                        ) : (
-                            <Menu className="h-6 w-6" />
-                        )}
-                    </button>
                 </div>
-            </div>
+            </header>
 
-            {/* Mobile Menu */}
-            {isMobileMenuOpen && (
-                <div className="lg:hidden fixed inset-0 z-50 bg-white overflow-y-auto animate-in slide-in-from-right-10 duration-200">
+            {/* Mobile Menu Portal */}
+            {mounted && isMobileMenuOpen && createPortal(
+                <div className="lg:hidden fixed inset-0 z-[100] bg-white overflow-y-auto">
                     <div className="flex items-center justify-between p-4 border-b border-slate-100">
                         <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
                             <Image
@@ -297,8 +306,9 @@ export function Header() {
                             </div>
                         </div>
                     </nav>
-                </div>
+                </div>,
+                document.body
             )}
-        </header>
+        </>
     )
 }
