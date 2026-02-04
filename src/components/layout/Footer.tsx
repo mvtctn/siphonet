@@ -19,7 +19,10 @@ export function Footer() {
                             className="h-10 brightness-0 invert mb-6"
                         />
                         <p className="text-slate-300 text-sm mb-4">
-                            Công ty cổ phần Siphonet - Chuyên cung cấp, lắp đặt thiết bị cơ điện M&E, hệ thống cấp thoát nước và xử lý nước.
+                            Công ty Cổ phần Siphonet - Chuyên cung cấp, lắp đặt thiết bị cơ điện M&E, hệ thống cấp thoát nước và xử lý nước.
+                        </p>
+                        <p className="text-slate-300 text-xs mb-4">
+                            Mã số thuế: 0111350715
                         </p>
                         <div className="flex gap-3">
                             <a
@@ -112,7 +115,7 @@ export function Footer() {
                             <li className="flex items-start gap-3">
                                 <MapPin className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
                                 <span className="text-slate-300">
-                                    123 Đường ABC, Phường XYZ, Quận 1, TP.HCM
+                                    Tầng 4, Tòa nhà N07-B1, Khu đô thị mới Dịch Vọng, Quận Cầu Giấy, Hà Nội
                                 </span>
                             </li>
                             <li className="flex items-center gap-3">
@@ -137,7 +140,7 @@ export function Footer() {
                 <div className="container mx-auto px-4 py-6">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
                         <p>
-                            © {new Date().getFullYear()} Công ty cổ phần Siphonet. All rights reserved.
+                            © {new Date().getFullYear()} Công ty Cổ phần Siphonet. All rights reserved.
                         </p>
                         <div className="flex gap-6">
                             <Link href="/chinh-sach-bao-mat" className="hover:text-accent transition-colors">

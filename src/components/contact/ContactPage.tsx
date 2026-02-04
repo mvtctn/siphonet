@@ -66,7 +66,10 @@ export function ContactPage() {
                                 <div>
                                     <h3 className="font-semibold text-primary mb-2">Địa chỉ</h3>
                                     <p className="text-slate-600">
-                                        Số 123, Đường ABC, Quận XYZ, Hà Nội
+                                        Tầng 4, Tòa nhà N07-B1, Khu đô thị mới Dịch Vọng, Quận Cầu Giấy, Hà Nội
+                                    </p>
+                                    <p className="text-slate-500 text-sm mt-2">
+                                        MST: 0111350715
                                     </p>
                                 </div>
                             </div>
