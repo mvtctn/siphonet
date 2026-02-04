@@ -187,10 +187,10 @@ export default function UsersManagementPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${user.role === 'admin'
-                                                    ? 'bg-rose-50 text-rose-600 border border-rose-100'
-                                                    : user.role === 'editor'
-                                                        ? 'bg-blue-50 text-blue-600 border border-blue-100'
-                                                        : 'bg-slate-50 text-slate-600 border border-slate-100'
+                                                ? 'bg-rose-50 text-rose-600 border border-rose-100'
+                                                : user.role === 'editor'
+                                                    ? 'bg-blue-50 text-blue-600 border border-blue-100'
+                                                    : 'bg-slate-50 text-slate-600 border border-slate-100'
                                                 }`}>
                                                 <Shield className="h-3 w-3" />
                                                 {user.role}
@@ -198,8 +198,8 @@ export default function UsersManagementPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 px-2.5 py-1 rounded-full ${user.active
-                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                                    : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                                : 'bg-slate-100 text-slate-500 border border-slate-200'
                                                 }`}>
                                                 {user.active ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                                                 {user.active ? 'Đang hoạt động' : 'Đã khóa'}
@@ -283,7 +283,7 @@ export default function UsersManagementPage() {
                                     className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-mono"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4 pt-2">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Quyền hạn</label>
                                     <select
@@ -296,20 +296,23 @@ export default function UsersManagementPage() {
                                         <option value="viewer">Người xem</option>
                                     </select>
                                 </div>
-                                <div className="flex flex-col justify-center pt-5">
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <div className="relative inline-flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.active}
-                                                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                                                className="sr-only"
-                                            />
-                                            <div className={`w-11 h-6 rounded-full transition-colors ${formData.active ? 'bg-primary' : 'bg-slate-300'}`}></div>
-                                            <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.active ? 'translate-x-5' : 'translate-x-0'}`}></div>
-                                        </div>
-                                        <span className="text-sm font-bold text-slate-700">Kích hoạt</span>
-                                    </label>
+                                <div className="flex flex-col">
+                                    <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wide invisible">Trạng thái</label>
+                                    <div className="flex-1 flex items-center">
+                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                            <div className="relative inline-flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.active}
+                                                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                                                    className="sr-only"
+                                                />
+                                                <div className={`w-11 h-6 rounded-full transition-colors ${formData.active ? 'bg-primary' : 'bg-slate-300'}`}></div>
+                                                <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm ${formData.active ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                            </div>
+                                            <span className="text-sm font-bold text-slate-700">Kích hoạt</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
