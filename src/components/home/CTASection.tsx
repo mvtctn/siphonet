@@ -27,7 +27,7 @@ export function CTASection() {
                             className="inline-flex items-center gap-2 px-8 py-4 bg-white text-accent hover:bg-slate-100 font-medium rounded-lg transition-colors"
                         >
                             <Mail className="h-5 w-5" />
-                            info@siphonet.com
+                            siphonetjsc@gmail.com
                         </a>
                     </div>
 

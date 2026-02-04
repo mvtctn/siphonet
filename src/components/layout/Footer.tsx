@@ -121,13 +121,13 @@ export function Footer() {
                             <li className="flex items-center gap-3">
                                 <Phone className="h-5 w-5 text-accent flex-shrink-0" />
                                 <a href="tel:0123456789" className="text-slate-300 hover:text-accent transition-colors">
-                                    0123 456 789
+                                    0913 381 683
                                 </a>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail className="h-5 w-5 text-accent flex-shrink-0" />
-                                <a href="mailto:info@siphonet.com" className="text-slate-300 hover:text-accent transition-colors">
-                                    info@siphonet.com
+                                <a href="mailto:siphonetjsc@gmail.com" className="text-slate-300 hover:text-accent transition-colors">
+                                    siphonetjsc@gmail.com
                                 </a>
                             </li>
                         </ul>

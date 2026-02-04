@@ -31,9 +31,9 @@ export function Header() {
                     <div className="container mx-auto px-4 py-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-4">
-                                <a href="tel:02432001234" className="flex items-center gap-2 hover:text-accent transition-colors">
+                                <a href="tel:0913381683" className="flex items-center gap-2 hover:text-accent transition-colors">
                                     <Phone className="h-4 w-4" />
-                                    <span>024 3200 1234</span>
+                                    <span>0913 381 683</span>
                                 </a>
                                 <a href="mailto:siphonetjsc@gmail.com" className="flex items-center gap-2 hover:text-accent transition-colors">
                                     <Mail className="h-4 w-4" />
