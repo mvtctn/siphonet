@@ -3,21 +3,24 @@
 import { useState, useEffect } from 'react'
 import { Search, SlidersHorizontal, Grid3x3, List, ArrowUpDown, Star, TrendingUp, Zap, Shield, Award } from 'lucide-react'
 import { ProductCard } from '@/components/products/ProductCard'
-import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { useSearchParams } from 'next/navigation'
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name' | 'popular'
 
 export function ProductsPage() {
+    const searchParams = useSearchParams()
+    const initialCategory = searchParams.get('category') || 'all'
+    const initialSearch = searchParams.get('search') || ''
+
     const [products, setProducts] = useState<any[]>([])
     const [categories, setCategories] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [isLoadingProducts, setIsLoadingProducts] = useState(false)
 
     // Filters
-    const [selectedCategory, setSelectedCategory] = useState<string>('all')
-    const [searchQuery, setSearchQuery] = useState('')
-    const [debouncedSearch, setDebouncedSearch] = useState('')
+    const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory)
+    const [searchQuery, setSearchQuery] = useState(initialSearch)
+    const [debouncedSearch, setDebouncedSearch] = useState(initialSearch)
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000])
     const [minRating, setMinRating] = useState<number>(0)
     const [sortBy, setSortBy] = useState<SortOption>('newest')
@@ -35,27 +38,15 @@ export function ProductsPage() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                // We can use the test endpoint or a dedicated categories endpoint
-                // For now let's query directly via supabase client if available, 
-                // but since we are in client component, let's use the products API to verify connection 
-                // or just fetch from a new simple route. 
-                // Actually, let's just make a quick ad-hoc fetch for categories from supabase directly 
-                // IF we exported it, but we only have it in lib.
-                // Let's create a Fetch for categories later. For now, let's use the mockCategories if we don't have API.
-                // Wait, I can allow the API to return categories too.
-                // Let's stick to fetching products first, and maybe categories from an API.
-
-                // Let's assume we will build /api/categories later.
-                // For this step, I'll fetch categories from the database using a direct query via a new API route or just use the products API 
-                // which returns joined data, but not list of categories.
-                // I will add a simple get categories logic here.
-
-                // Temporary: Fetch categories from Supabase via client-side query 
-                // (requires exposing supabase to client, which we did in lib/supabase.ts)
-                const { data } = await supabase.from('categories').select('*')
-                if (data) setCategories(data)
+                const response = await fetch('/api/categories')
+                const result = await response.json()
+                if (result.success) {
+                    setCategories(result.data)
+                }
             } catch (error) {
                 console.error('Failed to fetch categories', error)
+            } finally {
+                setIsLoading(false)
             }
         }
         fetchCategories()
@@ -66,80 +57,30 @@ export function ProductsPage() {
         const fetchProducts = async () => {
             setIsLoadingProducts(true)
             try {
-                // Initial query
-                let query = supabase
-                    .from('products')
-                    .select(`
-                        *,
-                        categories (
-                            id,
-                            name,
-                            slug
-                        )
-                    `)
-                    .eq('status', 'published')
+                // Build query string
+                const params = new URLSearchParams()
 
-                // Apply category filter
                 if (selectedCategory !== 'all') {
-                    // We need to find the category ID for the slug
-                    const cat = categories.find(c => c.slug === selectedCategory)
-                    if (cat) {
-                        query = query.eq('category_id', cat.id)
-                    }
+                    // find category id by slug or just use id if selectedCategory is id
+                    const cat = categories.find(c => c.slug === selectedCategory || c.id === selectedCategory)
+                    if (cat) params.append('category', cat.id)
                 }
 
-                // Apply search filter
-                if (debouncedSearch) {
-                    query = query.ilike('name', `%${debouncedSearch}%`)
-                }
+                if (debouncedSearch) params.append('search', debouncedSearch)
 
-                // Apply price filter
-                if (priceRange[0] > 0) {
-                    query = query.gte('price', priceRange[0])
-                }
-                if (priceRange[1] < 100000000) {
-                    query = query.lte('price', priceRange[1])
-                }
+                params.append('minPrice', priceRange[0].toString())
+                params.append('maxPrice', priceRange[1].toString())
+                params.append('sortBy', sortBy)
 
-                // Apply sorting
-                switch (sortBy) {
-                    case 'price-asc':
-                        query = query.order('price', { ascending: true })
-                        break
-                    case 'price-desc':
-                        query = query.order('price', { ascending: false })
-                        break
-                    case 'name':
-                        query = query.order('name', { ascending: true })
-                        break
-                    case 'popular':
-                        query = query.order('featured', { ascending: false })
-                        break
-                    case 'newest':
-                    default:
-                        query = query.order('created_at', { ascending: false })
-                        break
-                }
+                const response = await fetch(`/api/products?${params.toString()}`)
+                const result = await response.json()
 
-                const { data, error } = await query
-
-                if (error) throw error
-
-                if (data) {
-                    // Transform data to match local interface if needed
-                    const transformed = data.map((p: any) => ({
-                        ...p,
-                        category: p.categories?.name || '',
-                        price: parseFloat(p.price),
-                        images: p.images || [],
-                        rating: 4.5
-                    }))
-                    setProducts(transformed)
+                if (result.success) {
+                    setProducts(result.data)
                 }
             } catch (error) {
                 console.error('Error fetching products:', error)
             } finally {
-                setIsLoading(false)
                 setIsLoadingProducts(false)
             }
         }

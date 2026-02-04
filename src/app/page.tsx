@@ -8,6 +8,8 @@ import { TestimonialsSection } from '@/components/home/TestimonialsSection'
 import { FAQSection } from '@/components/home/FAQSection'
 import { CTASection } from '@/components/home/CTASection'
 
+export const dynamic = 'force-dynamic'
+
 export default function HomePage() {
     return (
         <>
