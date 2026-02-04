@@ -11,12 +11,14 @@ interface ProductDetailProps {
         name: string
         slug: string
         description: string
-        price: string
+        price: number
         stock: number
         sku: string
         category: string
         categoryId: string
         images: string[]
+        rating?: number
+        featured?: boolean
         technicalSpecifications?: Array<{
             parameter: string
             value: string
@@ -27,6 +29,7 @@ interface ProductDetailProps {
 
 export function ProductDetail({ product }: ProductDetailProps) {
     const [quantity, setQuantity] = useState(1)
+    const formattedPrice = new Intl.NumberFormat('vi-VN').format(product.price)
 
     return (
         <div className="min-h-screen bg-white">
@@ -74,7 +77,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
                         <div className="mb-6 p-6 bg-gradient-to-br from-slate-50 to-cyan-50 rounded-xl border border-slate-200">
                             <div className="flex items-baseline gap-2 mb-2">
                                 <span className="text-4xl font-bold text-accent">
-                                    {product.price}
+                                    {formattedPrice}
                                 </span>
                                 <span className="text-xl text-slate-600">đ</span>
                             </div>
@@ -208,7 +211,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
                                         {relatedProduct.name}
                                     </h3>
                                     <p className="text-lg font-bold text-accent">
-                                        {relatedProduct.price} đ
+                                        {new Intl.NumberFormat('vi-VN').format(relatedProduct.price)} đ
                                     </p>
                                 </Link>
                             ))}
