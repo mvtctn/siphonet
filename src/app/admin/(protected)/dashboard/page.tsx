@@ -49,7 +49,7 @@ export default async function AdminDashboard() {
                 <div className="bg-slate-50 p-6 rounded-full mb-4">
                     <Package size={48} className="text-slate-300" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Chào mừng trở lại, {session.name}!</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Chào mừng trở lại, {(session as any).name}!</h3>
                 <p className="text-slate-500 max-w-sm">
                     Hệ thống quản trị đã sẵn sàng. Hãy bắt đầu quản lý sản phẩm, bài viết hoặc cấu hình website.
                 </p>

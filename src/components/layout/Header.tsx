@@ -27,7 +27,7 @@ export function Header() {
         <>
             <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
                 {/* Top Bar */}
-                <div className="bg-primary text-white text-sm">
+                <div className="bg-primary text-white text-sm hidden lg:block">
                     <div className="container mx-auto px-4 py-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-4">
@@ -55,11 +55,11 @@ export function Header() {
                             <Image
                                 src="/logo.png"
                                 alt="Siphonet"
-                                width={200}
-                                height={40}
+                                width={160}
+                                height={32}
                                 priority
                                 style={{ width: 'auto', height: 'auto' }}
-                                className="h-10"
+                                className="h-8"
                             />
                         </Link>
 
