@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Phone, Mail, Menu, ChevronDown, Zap, Droplet, Waves, X, ShoppingBag } from 'lucide-react'
+import { Phone, Mail, Menu, ChevronDown, Zap, Droplet, Waves, X, ShoppingBag, Receipt } from 'lucide-react'
 import { mockCategories } from '@/lib/mock-data'
 
 import { useCartStore } from '@/store/useCartStore'
@@ -186,17 +186,43 @@ export function Header() {
                             </Link>
                         </div>
 
-                        {/* Mobile Menu Button */}
-                        <button
-                            className="lg:hidden p-2 text-slate-700 hover:text-accent z-50"
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        >
-                            {isMobileMenuOpen ? (
-                                <X className="h-6 w-6" />
-                            ) : (
-                                <Menu className="h-6 w-6" />
-                            )}
-                        </button>
+                        {/* Mobile Actions & Menu Button */}
+                        <div className="lg:hidden flex items-center gap-1 z-50">
+                            {/* Mobile Cart */}
+                            <Link
+                                href="/gio-hang"
+                                className="relative p-2 text-slate-700 hover:text-accent transition-all active:scale-95"
+                                aria-label="Giỏ hàng"
+                            >
+                                <ShoppingBag className="h-6 w-6" />
+                                {mounted && (
+                                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-white shadow-md animate-in zoom-in">
+                                        {getTotalItems()}
+                                    </span>
+                                )}
+                            </Link>
+
+                            {/* Mobile Quote/Checkout */}
+                            <Link
+                                href="/bao-gia"
+                                className="p-2 text-slate-700 hover:text-accent transition-all active:scale-95"
+                                aria-label="Yêu cầu báo giá"
+                            >
+                                <Receipt className="h-6 w-6" />
+                            </Link>
+
+                            <button
+                                className="p-2 ml-1 text-slate-700 hover:text-accent transition-all active:scale-95"
+                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                aria-label="Menu"
+                            >
+                                {isMobileMenuOpen ? (
+                                    <X className="h-6 w-6" />
+                                ) : (
+                                    <Menu className="h-6 w-6" />
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>

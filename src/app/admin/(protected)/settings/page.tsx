@@ -26,20 +26,27 @@ interface SettingsData {
         zalo: string
         youtube: string
     }
+    chat_bubble: {
+        enabled: boolean
+        zalo: string
+        messenger: string
+        whatsapp: string
+    }
 }
 
 const defaultSettings: SettingsData = {
     site_info: { title: '', description: '', email: '', phone: '', address: '' },
     seo: { meta_title: '', meta_description: '', keywords: '' },
     analytics: { google_analytics_id: '', google_console_id: '', facebook_pixel: '' },
-    social: { facebook: '', zalo: '', youtube: '' }
+    social: { facebook: '', zalo: '', youtube: '' },
+    chat_bubble: { enabled: true, zalo: '', messenger: '', whatsapp: '' }
 }
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState<SettingsData>(defaultSettings)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [activeTab, setActiveTab] = useState<'general' | 'seo' | 'analytics' | 'social'>('general')
+    const [activeTab, setActiveTab] = useState<'general' | 'seo' | 'analytics' | 'social' | 'chat'>('general')
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -80,7 +87,7 @@ export default function SettingsPage() {
         }
     }
 
-    const handleChange = (section: keyof SettingsData, field: string, value: string) => {
+    const handleChange = (section: keyof SettingsData, field: string, value: any) => {
         setSettings(prev => ({
             ...prev,
             [section]: {
@@ -140,6 +147,13 @@ export default function SettingsPage() {
                                 }`}
                         >
                             <Share2 size={18} /> Mạng xã hội
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('chat')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${activeTab === 'chat' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'
+                                }`}
+                        >
+                            <Share2 size={18} /> Bong bóng Chat
                         </button>
                     </nav>
                 </div>
@@ -312,6 +326,61 @@ export default function SettingsPage() {
                                         value={settings.social.youtube}
                                         onChange={(e) => handleChange('social', 'youtube', e.target.value)}
                                     />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Chat Bubble Settings */}
+                    {activeTab === 'chat' && (
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
+                            <h2 className="text-lg font-bold text-slate-800 mb-6 border-b pb-4">Cấu hình Bong bóng Chat</h2>
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                                    <div>
+                                        <h3 className="font-bold text-slate-900">Hiển thị Bong bóng Chat</h3>
+                                        <p className="text-xs text-slate-500">Bật/tắt cụm nút liên hệ nhanh ở góc màn hình</p>
+                                    </div>
+                                    <button
+                                        onClick={() => handleChange('chat_bubble', 'enabled', !settings.chat_bubble.enabled)}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${settings.chat_bubble.enabled ? 'bg-primary' : 'bg-slate-300'}`}
+                                    >
+                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.chat_bubble.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Link Zalo (zalo.me/...)</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                            value={settings.chat_bubble.zalo}
+                                            onChange={(e) => handleChange('chat_bubble', 'zalo', e.target.value)}
+                                            placeholder="https://zalo.me/0913381683"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Link Messenger (m.me/...)</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                            value={settings.chat_bubble.messenger}
+                                            onChange={(e) => handleChange('chat_bubble', 'messenger', e.target.value)}
+                                            placeholder="https://m.me/siphonetjsc"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Số WhatsApp</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                            value={settings.chat_bubble.whatsapp}
+                                            onChange={(e) => handleChange('chat_bubble', 'whatsapp', e.target.value)}
+                                            placeholder="84913381683"
+                                        />
+                                        <p className="text-[10px] text-slate-500 mt-1">Ghi mã quốc gia trước (ví dụ: 84913...)</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>

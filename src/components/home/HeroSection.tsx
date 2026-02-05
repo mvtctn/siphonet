@@ -4,7 +4,7 @@ import { ArrowRight, Zap, Shield, Award } from 'lucide-react'
 export function HeroSection() {
     return (
         <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary-800 to-slate-900 text-white">
-            <div className="container mx-auto px-4 py-24 md:py-32 relative">
+            <div className="container mx-auto px-4 pt-12 pb-20 md:pt-16 md:pb-28 relative">
                 <div className="grid lg:grid-cols-2 gap-12 items-center">
                     {/* Content */}
                     <div className="max-w-2xl">
@@ -21,7 +21,7 @@ export function HeroSection() {
                         </h1>
 
                         <p className="text-xl text-slate-300 mb-8 leading-relaxed">
-                            Chuyên cung cấp, lắp đặt thiết bị M&E, hệ thống cấp thoát nước và xử lý nước cho công trình dân dụng và công nghiệp.
+                            Nhà cung cấp, lắp đặt thiết bị M&E, hệ thống cấp thoát nước và xử lý nước cho công trình dân dụng và công nghiệp.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4">
