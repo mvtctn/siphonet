@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, Users, Settings, Tag, FileText, Layers, ChevronLeft, ChevronRight, MessageSquare, Mail, Star, ShoppingCart } from 'lucide-react'
+import { LayoutDashboard, Package, Users, Settings, Tag, FileText, Layers, ChevronLeft, ChevronRight, MessageSquare, Mail, Star, ShoppingCart, HardDrive } from 'lucide-react'
 import { useState } from 'react'
 
 export function AdminSidebar() {
@@ -27,6 +27,7 @@ export function AdminSidebar() {
         {
             title: 'Nội dung',
             items: [
+                { href: '/admin/media', label: 'Thư viện Media', icon: HardDrive },
                 { href: '/admin/posts', label: 'Bài viết (Blog)', icon: FileText },
                 { href: '/admin/pages', label: 'Trang tĩnh', icon: Layers },
             ]

@@ -298,6 +298,22 @@ export const contacts = pgTable('contacts', {
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
+// Media Table
+export const media = pgTable('media', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: varchar('name', { length: 500 }).notNull(),
+    fileName: varchar('file_name', { length: 500 }).notNull(),
+    url: varchar('url', { length: 1000 }).notNull(),
+    type: varchar('type', { length: 50 }).notNull(), // image, video, document
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    size: integer('size'), // in bytes
+    width: integer('width'),
+    height: integer('height'),
+    altText: text('alt_text'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
 // Quote Requests Table
 export const quoteRequests = pgTable('quote_requests', {
     id: uuid('id').defaultRandom().primaryKey(),
