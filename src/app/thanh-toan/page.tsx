@@ -41,7 +41,12 @@ export default function CheckoutPage() {
 
     useEffect(() => {
         setIsHydrated(true)
-    }, [])
+
+        // Redirect if cart is empty
+        if (isHydrated && cartItems.length === 0 && !isLoading) {
+            router.push('/gio-hang')
+        }
+    }, [isHydrated, cartItems.length, isLoading, router])
 
     if (!isHydrated) return null
 
@@ -50,7 +55,6 @@ export default function CheckoutPage() {
     const total = subtotal + shipping
 
     if (cartItems.length === 0 && !isLoading) {
-        router.push('/gio-hang')
         return null
     }
 
@@ -191,8 +195,8 @@ export default function CheckoutPage() {
                                             key={method.id}
                                             onClick={() => setPaymentMethod(method.id as any)}
                                             className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex items-start gap-4 ${paymentMethod === method.id
-                                                    ? 'border-primary bg-primary/[0.03]'
-                                                    : 'border-slate-100 bg-white hover:border-slate-200'
+                                                ? 'border-primary bg-primary/[0.03]'
+                                                : 'border-slate-100 bg-white hover:border-slate-200'
                                                 }`}
                                         >
                                             <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === method.id ? 'border-primary' : 'border-slate-300'
@@ -259,8 +263,8 @@ export default function CheckoutPage() {
 
                                 <button
                                     className={`w-full mt-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${isLoading
-                                            ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                                            : 'bg-primary text-white hover:bg-white hover:text-slate-900 shadow-lg shadow-primary/30 active:scale-95'
+                                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                        : 'bg-primary text-white hover:bg-white hover:text-slate-900 shadow-lg shadow-primary/30 active:scale-95'
                                         }`}
                                     disabled={isLoading}
                                 >

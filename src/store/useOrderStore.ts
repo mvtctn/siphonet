@@ -36,6 +36,7 @@ interface OrderState {
     fetchOrders: () => Promise<void>
     updateOrderStatus: (orderId: string, status: string) => Promise<void>
     updatePaymentStatus: (orderId: string, status: string) => Promise<void>
+    updateOrderNotes: (orderId: string, notes: string) => Promise<void>
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
@@ -93,6 +94,25 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             }
         } catch (error) {
             console.error('Failed to update payment status', error)
+        }
+    },
+
+    updateOrderNotes: async (orderId: string, notes: string) => {
+        try {
+            const response = await fetch(`/api/admin/orders/${orderId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes })
+            })
+            const result = await response.json()
+            if (result.success) {
+                const orders = get().orders.map(o =>
+                    o.id === orderId ? { ...o, notes } : o
+                )
+                set({ orders })
+            }
+        } catch (error) {
+            console.error('Failed to update order notes', error)
         }
     }
 }))

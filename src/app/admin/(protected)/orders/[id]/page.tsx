@@ -31,10 +31,11 @@ import { useRouter } from 'next/navigation'
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: orderId } = use(params)
     const router = useRouter()
-    const { orders, updateOrderStatus, updatePaymentStatus } = useOrderStore()
+    const { orders, updateOrderStatus, updatePaymentStatus, updateOrderNotes } = useOrderStore()
     const [order, setOrder] = useState<Order | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [isUpdating, setIsUpdating] = useState(false)
+    const [notes, setNotes] = useState('')
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -43,6 +44,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 const result = await response.json()
                 if (result.success) {
                     setOrder(result.data)
+                    setNotes(result.data.notes || '')
                 }
             } catch (error) {
                 console.error('Failed to fetch order', error)
@@ -65,6 +67,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         await updatePaymentStatus(orderId, newStatus)
         setOrder(prev => prev ? { ...prev, paymentStatus: newStatus as any } : null)
         setIsUpdating(false)
+    }
+
+    const handleSaveNotes = async () => {
+        setIsUpdating(true)
+        await updateOrderNotes(orderId, notes)
+        setOrder(prev => prev ? { ...prev, notes } : null)
+        setIsUpdating(false)
+        alert('Đã lưu ghi chú thành công!')
+    }
+
+    const handlePrint = () => {
+        window.print()
+    }
+
+    const handleOpenMap = () => {
+        if (order?.deliveryAddress) {
+            const encodedAddress = encodeURIComponent(order.deliveryAddress)
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank')
+        }
     }
 
     if (isLoading) {
@@ -106,7 +127,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button className="hidden md:flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 font-bold text-sm transition-colors border border-slate-200 rounded-xl bg-white hover:bg-slate-50">
+                        <button
+                            onClick={handlePrint}
+                            className="hidden md:flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 font-bold text-sm transition-colors border border-slate-200 rounded-xl bg-white hover:bg-slate-50"
+                        >
                             <Printer className="h-4 w-4" />
                             In hóa đơn
                         </button>
@@ -255,7 +279,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                                     "{order.deliveryAddress}"
                                 </p>
                             </div>
-                            <button className="w-full mt-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-bold text-xs transition-all tracking-widest uppercase">
+                            <button
+                                onClick={handleOpenMap}
+                                className="w-full mt-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-bold text-xs transition-all tracking-widest uppercase"
+                            >
                                 Bản đồ chỉ đường
                             </button>
                         </div>
@@ -354,11 +381,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                             Ghi chú đơn hàng
                         </h3>
                         <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            disabled={isUpdating}
                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm text-slate-600 focus:ring-0 focus:border-primary transition-all outline-none resize-none h-32"
                             placeholder="Thêm ghi chú nội bộ cho đơn hàng này..."
                         />
-                        <button className="w-full mt-4 py-3 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">
-                            Lưu ghi chú
+                        <button
+                            onClick={handleSaveNotes}
+                            disabled={isUpdating}
+                            className="w-full mt-4 py-3 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200 disabled:opacity-50"
+                        >
+                            {isUpdating ? 'Đang lưu...' : 'Lưu ghi chú'}
                         </button>
                     </div>
                 </aside>

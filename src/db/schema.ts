@@ -316,6 +316,17 @@ export const quoteRequests = pgTable('quote_requests', {
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
+// Admin Users Table
+export const adminUsers = pgTable('admin_users', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    passwordHash: varchar('password_hash', { length: 500 }).notNull(),
+    name: varchar('name', { length: 255 }),
+    role: varchar('role', { length: 50 }).default('admin'),
+    active: boolean('active').default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
 // Relations
 export const categoriesRelations = relations(categories, ({ many, one }) => ({
     products: many(products),
