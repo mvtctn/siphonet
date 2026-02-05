@@ -1,7 +1,22 @@
 import { CheckCircle, Users, Award, Target } from 'lucide-react'
 import Image from 'next/image'
 
-export function AboutPage() {
+interface AboutPageProps {
+    initialData?: any
+}
+
+export function AboutPage({ initialData }: AboutPageProps) {
+    // If we have dynamic content from database, render it
+    if (initialData?.layout?.body) {
+        return (
+            <div
+                className="min-h-screen bg-white"
+                dangerouslySetInnerHTML={{ __html: initialData.layout.body }}
+            />
+        )
+    }
+
+    // Fallback to hardcoded content
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             {/* Hero Section */}

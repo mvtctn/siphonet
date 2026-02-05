@@ -7,7 +7,10 @@ import Image from 'next/image'
 import { Phone, Mail, Menu, ChevronDown, Zap, Droplet, Waves, X, ShoppingBag } from 'lucide-react'
 import { mockCategories } from '@/lib/mock-data'
 
+import { useCartStore } from '@/store/useCartStore'
+
 export function Header() {
+    const { getTotalItems } = useCartStore()
     const [isProductsMenuOpen, setIsProductsMenuOpen] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -163,8 +166,18 @@ export function Header() {
                             </Link>
                         </nav>
 
-                        {/* CTA Button */}
-                        <div className="hidden lg:flex items-center gap-2">
+                        {/* CTA Button & Cart */}
+                        <div className="hidden lg:flex items-center gap-6">
+                            {/* Cart Icon */}
+                            <Link href="/gio-hang" className="relative group p-2 text-slate-700 hover:text-accent transition-colors">
+                                <ShoppingBag className="h-6 w-6 group-hover:scale-110 transition-transform" />
+                                {mounted && (
+                                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white shadow-lg animate-in zoom-in">
+                                        {getTotalItems()}
+                                    </span>
+                                )}
+                            </Link>
+
                             <Link
                                 href="/bao-gia"
                                 className="px-6 py-2.5 bg-accent hover:bg-accent-600 text-white text-sm font-semibold rounded-lg transition-all hover:scale-105 shadow-lg shadow-accent/30"

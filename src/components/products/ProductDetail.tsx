@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, Check, Share2, Heart, Eye, Package, Shield, TruckIcon, Star, MessageSquare } from 'lucide-react'
 
+import { useCartStore } from '@/store/useCartStore'
+
 interface ProductDetailProps {
     product: {
         id: string
@@ -33,15 +35,30 @@ interface ProductDetailProps {
 }
 
 export function ProductDetail({ product, relatedProducts }: ProductDetailProps) {
+    const { addItem } = useCartStore()
     const [quantity, setQuantity] = useState(1)
-    const [selectedImage, setSelectedImage] = useState(product.images[0] || '')
+    const [selectedImage, setSelectedImage] = useState(product.images?.[0] || '')
     const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'reviews'>('description')
+    const [isAdded, setIsAdded] = useState(false)
 
     const formattedPrice = new Intl.NumberFormat('vi-VN').format(product.price)
     const formattedOldPrice = product.old_price ? new Intl.NumberFormat('vi-VN').format(product.old_price) : null
 
+    const handleAddToCart = () => {
+        addItem({
+            id: product.id,
+            name: product.name,
+            price: Number(product.price),
+            quantity: quantity,
+            image: product.images?.[0] || '',
+            slug: product.slug
+        })
+        setIsAdded(true)
+        setTimeout(() => setIsAdded(false), 2000)
+    }
+
     // Ensure images array
-    const images = product.images.length > 0 ? product.images : []
+    const images = Array.isArray(product.images) ? product.images : []
 
     return (
         <div className="min-h-screen bg-slate-50/50 pb-20">
@@ -92,8 +109,8 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                                             key={idx}
                                             onClick={() => setSelectedImage(img)}
                                             className={`aspect-square rounded-xl border-2 overflow-hidden transition-all ${selectedImage === img
-                                                    ? 'border-primary ring-2 ring-primary/20 ring-offset-2'
-                                                    : 'border-slate-100 hover:border-slate-300 opacity-70 hover:opacity-100'
+                                                ? 'border-primary ring-2 ring-primary/20 ring-offset-2'
+                                                : 'border-slate-100 hover:border-slate-300 opacity-70 hover:opacity-100'
                                                 }`}
                                         >
                                             <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
@@ -161,10 +178,18 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                                         <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 hover:bg-slate-100 text-slate-600 font-bold transition-colors">+</button>
                                     </div>
 
-                                    {/* Buttons */}
-                                    <button className="flex-1 bg-primary hover:bg-primary-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/30 transition-all hover:-translate-y-1 flex items-center justify-center gap-2">
-                                        <ShoppingCart size={20} />
-                                        Thêm vào giỏ
+                                    <button
+                                        onClick={handleAddToCart}
+                                        className={`flex-1 font-bold py-3 px-8 rounded-xl shadow-lg transition-all hover:-translate-y-1 flex items-center justify-center gap-2 ${isAdded
+                                                ? 'bg-green-600 text-white shadow-green-200'
+                                                : 'bg-primary hover:bg-primary-600 text-white shadow-primary/30'
+                                            }`}
+                                    >
+                                        {isAdded ? (
+                                            <><Check size={20} /> Đã thêm vào giỏ</>
+                                        ) : (
+                                            <><ShoppingCart size={20} /> Thêm vào giỏ</>
+                                        )}
                                     </button>
                                     <div className="flex gap-2">
                                         <button className="p-3 border-2 border-slate-200 rounded-xl hover:border-red-200 hover:bg-red-50 hover:text-red-500 transition-colors text-slate-400">

@@ -1,6 +1,8 @@
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { db } from '@/db'
+import { orders, products, projects, posts } from '@/db/schema'
+import { desc, count, sql } from 'drizzle-orm'
 import {
     Package,
     TrendingUp,
@@ -10,7 +12,10 @@ import {
     Plus,
     ArrowRight,
     Clock,
-    Layout
+    Layout,
+    ShoppingCart,
+    CreditCard,
+    ShoppingBag
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -21,28 +26,30 @@ export default async function AdminDashboard() {
         redirect('/admin/login')
     }
 
-    // Fetch stats
+    // Fetch stats using Drizzle
     const [
-        { count: productsCount },
-        { count: projectsCount },
-        { count: postsCount },
-        { count: usersCount },
-        { data: latestProjects },
-        { data: latestProducts }
+        productsRes,
+        projectsRes,
+        postsRes,
+        ordersRes,
+        latestOrders,
+        latestProjects,
+        latestProducts
     ] = await Promise.all([
-        supabase.from('products').select('*', { count: 'exact', head: true }),
-        supabase.from('projects').select('*', { count: 'exact', head: true }),
-        supabase.from('posts').select('*', { count: 'exact', head: true }),
-        supabase.from('admin_users').select('*', { count: 'exact', head: true }),
-        supabase.from('projects').select('*').order('created_at', { ascending: false }).limit(5),
-        supabase.from('products').select('*').order('created_at', { ascending: false }).limit(5)
+        db.select({ value: count() }).from(products),
+        db.select({ value: count() }).from(projects),
+        db.select({ value: count() }).from(posts),
+        db.select({ value: count() }).from(orders),
+        db.select().from(orders).orderBy(desc(orders.createdAt)).limit(5),
+        db.select().from(projects).orderBy(desc(projects.createdAt)).limit(5),
+        db.select().from(products).orderBy(desc(products.createdAt)).limit(5)
     ])
 
     const stats = [
-        { label: 'Sản phẩm', value: productsCount || 0, icon: Package, color: 'blue', href: '/admin/products' },
-        { label: 'Dự án', value: projectsCount || 0, icon: Layout, color: 'emerald', href: '/admin/projects' },
-        { label: 'Bài viết', value: postsCount || 0, icon: FileText, color: 'amber', href: '/admin/posts' },
-        { label: 'Thành viên', value: usersCount || 0, icon: Users, color: 'indigo', href: '/admin/users' },
+        { label: 'Đơn hàng', value: ordersRes[0].value, icon: ShoppingCart, color: 'blue', href: '/admin/orders' },
+        { label: 'Sản phẩm', value: productsRes[0].value, icon: Package, color: 'emerald', href: '/admin/products' },
+        { label: 'Dự án', value: projectsRes[0].value, icon: Layout, color: 'amber', href: '/admin/projects' },
+        { label: 'Bài viết', value: postsRes[0].value, icon: FileText, color: 'indigo', href: '/admin/posts' },
     ]
 
     return (
@@ -86,33 +93,43 @@ export default async function AdminDashboard() {
             </div>
 
             <div className="grid lg:grid-cols-2 gap-8">
-                {/* Recent Projects */}
+                {/* Recent Orders */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                         <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                            <Layout className="text-emerald-500" size={20} /> Dự án mới nhất
+                            <ShoppingBag className="text-blue-500" size={20} /> Đơn hàng mới nhất
                         </h3>
-                        <Link href="/admin/projects" className="text-sm text-primary hover:underline flex items-center gap-1">
+                        <Link href="/admin/orders" className="text-sm text-primary hover:underline flex items-center gap-1">
                             Tất cả <ArrowRight size={14} />
                         </Link>
                     </div>
                     <div className="divide-y divide-slate-50">
-                        {latestProjects?.map((project: any) => (
-                            <div key={project.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                                <div>
-                                    <div className="font-semibold text-slate-900 line-clamp-1">{project.title}</div>
-                                    <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                        <Clock size={12} /> {new Date(project.created_at).toLocaleDateString('vi-VN')}
+                        {latestOrders?.map((order: any) => (
+                            <div key={order.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded flex items-center justify-center">
+                                        <ShoppingBag size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-slate-900 line-clamp-1">#{order.orderCode} - {order.customerName}</div>
+                                        <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                            <CreditCard size={12} /> {order.paymentMethod} • {new Intl.NumberFormat('vi-VN').format(Number(order.totalAmount))}đ
+                                        </div>
                                     </div>
                                 </div>
-                                <span className="text-xs font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded">
-                                    {project.category || 'N/A'}
-                                </span>
+                                <div className="text-right">
+                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${order.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                        order.status === 'processing' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                                            'bg-blue-50 text-blue-600 border-blue-100'
+                                        }`}>
+                                        {order.status === 'new' ? 'Mới' : order.status === 'processing' ? 'Đang xử lý' : 'Xong'}
+                                    </span>
+                                </div>
                             </div>
                         ))}
                     </div>
-                    {(!latestProjects || latestProjects.length === 0) && (
-                        <div className="p-12 text-center text-slate-400">Chưa có dự án nào.</div>
+                    {(!latestOrders || latestOrders.length === 0) && (
+                        <div className="p-12 text-center text-slate-400">Chưa có đơn hàng nào.</div>
                     )}
                 </div>
 
@@ -140,7 +157,7 @@ export default async function AdminDashboard() {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-sm font-bold text-slate-900">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(product.price))}
                                     </div>
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${product.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
                                         }`}>

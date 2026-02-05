@@ -1,49 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-// Mock cart data
-const mockCartItems = [
-    {
-        id: 1,
-        name: 'Máy bơm ly tâm Ebara',
-        price: 15000000,
-        quantity: 2,
-        image: '/products/pump-1.jpg',
-        slug: 'may-bom-ly-tam-ebara'
-    },
-    {
-        id: 2,
-        name: 'Hệ thống lọc nước RO',
-        price: 25000000,
-        quantity: 1,
-        image: '/products/water-filter-1.jpg',
-        slug: 'he-thong-loc-nuoc-ro'
-    }
-]
+import { useCartStore } from '@/store/useCartStore'
 
 export function CartPage() {
-    const [cartItems, setCartItems] = useState(mockCartItems)
+    const { items: cartItems, updateQuantity, removeItem, getSubtotal } = useCartStore()
 
-    const updateQuantity = (id: number, change: number) => {
-        setCartItems(items =>
-            items.map(item =>
-                item.id === id
-                    ? { ...item, quantity: Math.max(1, item.quantity + change) }
-                    : item
-            )
-        )
-    }
-
-    const removeItem = (id: number) => {
-        setCartItems(items => items.filter(item => item.id !== id))
-    }
-
-    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-    const shipping = 500000
+    const subtotal = getSubtotal()
+    const shipping = subtotal > 0 ? 500000 : 0
     const total = subtotal + shipping
 
     const formatPrice = (price: number) => {
@@ -52,6 +20,14 @@ export function CartPage() {
             currency: 'VND'
         }).format(price)
     }
+
+    const [isHydrated, setIsHydrated] = useState(false)
+
+    useEffect(() => {
+        setIsHydrated(true)
+    }, [])
+
+    if (!isHydrated) return null
 
     if (cartItems.length === 0) {
         return (
@@ -113,7 +89,7 @@ export function CartPage() {
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <button
-                                                    onClick={() => updateQuantity(item.id, -1)}
+                                                    onClick={() => updateQuantity(item.id as any, item.quantity - 1)}
                                                     className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
                                                 >
                                                     <Minus className="h-4 w-4" />
@@ -122,7 +98,7 @@ export function CartPage() {
                                                     {item.quantity}
                                                 </span>
                                                 <button
-                                                    onClick={() => updateQuantity(item.id, 1)}
+                                                    onClick={() => updateQuantity(item.id as any, item.quantity + 1)}
                                                     className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
                                                 >
                                                     <Plus className="h-4 w-4" />
@@ -130,7 +106,7 @@ export function CartPage() {
                                             </div>
 
                                             <button
-                                                onClick={() => removeItem(item.id)}
+                                                onClick={() => removeItem(item.id as any)}
                                                 className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium"
                                             >
                                                 <Trash2 className="h-5 w-5" />
@@ -165,9 +141,12 @@ export function CartPage() {
                                 </div>
                             </div>
 
-                            <button className="w-full px-6 py-3 bg-accent hover:bg-accent-600 text-white font-semibold rounded-lg transition-all hover:scale-105 shadow-lg shadow-accent/30 mb-4">
+                            <Link
+                                href="/thanh-toan"
+                                className="block w-full px-6 py-3 bg-accent hover:bg-accent-600 text-white text-center font-semibold rounded-lg transition-all hover:scale-105 shadow-lg shadow-accent/30 mb-4"
+                            >
                                 Tiến hành thanh toán
-                            </button>
+                            </Link>
 
                             <Link
                                 href="/san-pham"

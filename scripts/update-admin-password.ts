@@ -19,18 +19,27 @@ async function updateAdminPassword() {
 
     console.log(`🔒 Hashing password for ${email}...`)
 
-    // Update user
+    // Upsert user (Create if missing, update if exists)
     const { data, error } = await supabase
         .from('admin_users')
-        .update({ password_hash: passwordHash })
-        .eq('email', email)
+        .upsert({
+            email,
+            password_hash: passwordHash,
+            name: 'Siphonet Admin',
+            role: 'admin',
+            active: true
+        }, { onConflict: 'email' })
         .select()
 
     if (error) {
-        console.error('❌ Failed to update password:', error)
+        console.error('❌ Failed to update/create admin:', error)
+        if (error.message.includes('Tenant or user not found')) {
+            console.error('\n📢 PHÁT HIỆN LỖI KẾT NỐI: Cấu hình DATABASE_URL trong .env.local của bạn vẫn sai.')
+            console.error('Hãy đảm bảo username trong DATABASE_URL là: postgres.lchpcrquxjcnpubjqlof')
+        }
     } else {
-        console.log('✅ Password updated successfully!')
-        console.log('New Admin User:', data)
+        console.log('✅ Admin user processed successfully (Created or Updated)!')
+        console.log('User Details:', data)
     }
 }
 
