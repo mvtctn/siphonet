@@ -9,6 +9,20 @@ export async function GET(request: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     try {
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+
+        if (id) {
+            const { data, error } = await supabaseAdmin
+                .from('posts')
+                .select('*')
+                .eq('id', id)
+                .single()
+
+            if (error) throw error
+            return NextResponse.json({ success: true, data })
+        }
+
         const { data, error } = await supabaseAdmin
             .from('posts')
             .select('*')
@@ -28,15 +42,13 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json()
-        // 1. Exclude 'featured', 'seo_score' (columns missing in DB)
-        // 2. Map 'image' -> 'featured_image_url' (DB column name)
-        const { featured, seo_score, image, ...postData } = body
+        const { featured, seo_score, image, focus_keywords, ...postData } = body
 
         if (!postData.title) {
             return NextResponse.json({ error: 'Missing title' }, { status: 400 })
         }
 
-        // Generate slug
+        // Generate slug if not provided
         const slug = postData.slug || postData.title.toLowerCase()
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
             .replace(/[đĐ]/g, "d")
@@ -49,8 +61,9 @@ export async function POST(request: NextRequest) {
             .insert({
                 ...postData,
                 slug,
-                featured_image_url: image, // Map correctly
-                author: session.name || 'Quản trị viên',
+                featured_image_url: image,
+                focus_keywords,
+                author: postData.author || session.name || 'Quản trị viên',
                 updated_at: new Date().toISOString()
             })
             .select()
@@ -60,6 +73,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, data })
     } catch (error: any) {
+        console.error('POST Post Error:', error)
         return NextResponse.json({ error: error.message }, { status: 500 })
     }
 }
@@ -70,7 +84,7 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { id, featured, seo_score, image, ...updates } = body
+        const { id, featured, seo_score, image, focus_keywords, ...updates } = body
 
         if (!id) return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
 
@@ -78,7 +92,8 @@ export async function PUT(request: NextRequest) {
             .from('posts')
             .update({
                 ...updates,
-                featured_image_url: image, // Map correctly
+                featured_image_url: image,
+                focus_keywords,
                 updated_at: new Date().toISOString()
             })
             .eq('id', id)
@@ -89,6 +104,7 @@ export async function PUT(request: NextRequest) {
 
         return NextResponse.json({ success: true, data })
     } catch (error: any) {
+        console.error('PUT Post Error:', error)
         return NextResponse.json({ error: error.message }, { status: 500 })
     }
 }

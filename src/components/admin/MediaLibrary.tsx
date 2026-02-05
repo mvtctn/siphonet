@@ -104,11 +104,13 @@ export function MediaLibrary({ onSelect, multiSelect = false, selectedUrls = [] 
         }
     }
 
-    const formatSize = (bytes: number) => {
+    const formatSize = (bytes: number | null | undefined) => {
+        if (bytes === null || bytes === undefined || isNaN(bytes)) return '—'
         if (bytes === 0) return '0 Bytes'
         const k = 1024
         const sizes = ['Bytes', 'KB', 'MB', 'GB']
         const i = Math.floor(Math.log(bytes) / Math.log(k))
+        if (i < 0 || i >= sizes.length) return bytes + ' B'
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
     }
 
@@ -300,17 +302,19 @@ export function MediaLibrary({ onSelect, multiSelect = false, selectedUrls = [] 
                             </button>
                         </div>
 
-                        {onSelect && (
-                            <div className="pt-4 border-t border-slate-100">
-                                <button
-                                    onClick={() => onSelect(selectedItem.url)}
-                                    className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg hover:bg-primary-700 transition-all shadow-lg shadow-primary/20"
-                                >
-                                    Chọn file này
-                                </button>
-                            </div>
-                        )}
                     </div>
+
+                    {onSelect && (
+                        <div className="p-4 bg-white border-t border-slate-100 flex-shrink-0">
+                            <button
+                                onClick={() => onSelect(selectedItem.url)}
+                                className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-bold text-lg hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                            >
+                                <Check size={20} />
+                                Chèn vào bài viết
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

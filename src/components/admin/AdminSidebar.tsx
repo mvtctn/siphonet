@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, Users, Settings, Tag, FileText, Layers, ChevronLeft, ChevronRight, MessageSquare, Mail, Star, ShoppingCart, HardDrive } from 'lucide-react'
+import { LayoutDashboard, Package, Users, Settings, Tag, FileText, Layers, ChevronLeft, ChevronRight, MessageSquare, Mail, Star, ShoppingCart, HardDrive, ListTree } from 'lucide-react'
 import { useState } from 'react'
 
 export function AdminSidebar() {
@@ -42,6 +42,7 @@ export function AdminSidebar() {
             title: 'Cài đặt',
             items: [
                 { href: '/admin/users', label: 'Người dùng', icon: Users },
+                { href: '/admin/menus', label: 'Quản lý Menu', icon: ListTree },
                 { href: '/admin/settings', label: 'Cấu hình Web', icon: Settings },
                 { href: '/admin/settings/email', label: 'Cài đặt Mail', icon: Mail },
             ]
@@ -69,7 +70,7 @@ export function AdminSidebar() {
                 {navGroups.map((group, gIdx) => (
                     <div key={gIdx} className="space-y-2">
                         {!collapsed && (
-                            <h3 className="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+                            <h3 className="px-4 text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
                                 {group.title}
                             </h3>
                         )}

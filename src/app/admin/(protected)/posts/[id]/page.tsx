@@ -7,9 +7,10 @@ import {
     ArrowLeft, Save, Eye, Layout, Loader2,
     CheckCircle2, Image as ImageIcon, Hash,
     Type, AlignLeft, List, Bold, Italic, Link as LinkIcon,
-    Calendar, User, Info, Smartphone, Tag, Globe, Settings
+    Calendar, User, Info, Smartphone, Tag, Globe, Settings, X
 } from 'lucide-react'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { MediaLibrary } from '@/components/admin/MediaLibrary'
 
 export default function PostEditor({ params }: { params: Promise<{ id: string }> }) {
     const { id: postId } = use(params)
@@ -22,6 +23,7 @@ export default function PostEditor({ params }: { params: Promise<{ id: string }>
 
     const [isLoading, setIsLoading] = useState(!isNew)
     const [isSaving, setIsSaving] = useState(false)
+    const [isShowLibraryModal, setIsShowLibraryModal] = useState(false)
     const [categories, setCategories] = useState<{ id: string, name: string }[]>([])
 
     const [formData, setFormData] = useState({
@@ -32,8 +34,11 @@ export default function PostEditor({ params }: { params: Promise<{ id: string }>
         category: '',
         featured_image_url: '',
         status: 'draft',
+        author: '',
+        tags: [] as string[],
         meta_title: '',
-        meta_description: ''
+        meta_description: '',
+        focus_keywords: ''
     })
 
     useEffect(() => {
@@ -67,8 +72,11 @@ export default function PostEditor({ params }: { params: Promise<{ id: string }>
                     category: post.category || '',
                     featured_image_url: post.featured_image_url || '',
                     status: post.status || 'draft',
+                    author: post.author || '',
+                    tags: post.tags || [],
                     meta_title: post.meta_title || '',
-                    meta_description: post.meta_description || ''
+                    meta_description: post.meta_description || '',
+                    focus_keywords: post.focus_keywords || ''
                 })
             }
         } catch (error) {
@@ -168,6 +176,17 @@ export default function PostEditor({ params }: { params: Promise<{ id: string }>
             .replace(/^-+|-+$/g, '')
 
         setFormData({ ...formData, slug })
+    }
+
+    const handleInsertMedia = (url: string) => {
+        const html = `<img src="${url}" alt="" class="max-w-full h-auto rounded-2xl shadow-lg my-8 mx-auto block" />\n`
+
+        if (editorMode === 'visual') {
+            document.execCommand('insertHTML', false, html)
+        } else {
+            insertTag(html, '')
+        }
+        setIsShowLibraryModal(false)
     }
 
     const toggleMode = (mode: 'html' | 'visual') => {
@@ -270,6 +289,7 @@ export default function PostEditor({ params }: { params: Promise<{ id: string }>
                             <div className="w-px h-6 bg-slate-200 mx-1" />
                             <button onClick={() => execCommand('insertUnorderedList')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Danh sách"><List className="h-4 w-4" /></button>
                             <button onClick={() => execCommand('createLink', prompt('Nhập địa chỉ liên kết:') || '#')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Liên kết"><LinkIcon className="h-4 w-4" /></button>
+                            <button onClick={() => setIsShowLibraryModal(true)} className="p-2 hover:bg-white rounded-lg text-emerald-600 transition-all hover:text-emerald-700 active:scale-90" title="Chèn ảnh từ thư viện"><ImageIcon className="h-4 w-4" /></button>
 
                             <div className="ml-auto flex items-center gap-3">
                                 <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Chế độ:</span>
@@ -344,6 +364,39 @@ export default function PostEditor({ params }: { params: Promise<{ id: string }>
                         </select>
                     </div>
 
+                    {/* Author & Tags */}
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-5">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Tác giả</label>
+                                <div className="relative group">
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                    <input
+                                        type="text"
+                                        value={formData.author}
+                                        onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                                        placeholder="Tên tác giả..."
+                                        className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Thẻ (Tags)</label>
+                                <div className="relative group">
+                                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                    <input
+                                        type="text"
+                                        value={formData.tags.join(', ')}
+                                        onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()) })}
+                                        placeholder="Công nghệ, Siphonet..."
+                                        className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-slate-400 mt-2 font-medium italic">Phân cách bằng dấu phẩy</p>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Category Selection */}
                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-4">
                         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Danh mục</h3>
@@ -405,10 +458,43 @@ export default function PostEditor({ params }: { params: Promise<{ id: string }>
                                     <span className={formData.meta_description.length > 160 ? 'text-red-500' : 'text-emerald-500'}>{formData.meta_description.length}</span>
                                 </div>
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Từ khóa chính</label>
+                                <textarea
+                                    value={formData.focus_keywords}
+                                    onChange={(e) => setFormData({ ...formData, focus_keywords: e.target.value })}
+                                    rows={2}
+                                    placeholder="Cách thoát nước siphonet, hệ thống thoát nước..."
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all resize-none font-medium"
+                                />
+                            </div>
                         </div>
                     </div>
                 </aside>
             </main>
+
+            {/* Library Modal */}
+            {isShowLibraryModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-[40px] w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-white/20">
+                        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900">Thư viện Media</h2>
+                                <p className="text-sm text-slate-500 font-medium">Chọn một ảnh để chèn vào bài viết của bạn.</p>
+                            </div>
+                            <button
+                                onClick={() => setIsShowLibraryModal(false)}
+                                className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                            >
+                                <X size={28} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-hidden p-8">
+                            <MediaLibrary onSelect={handleInsertMedia} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

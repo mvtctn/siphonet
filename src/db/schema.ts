@@ -314,6 +314,24 @@ export const media = pgTable('media', {
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
+// Menus Table
+export const menus = pgTable('menus', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: varchar('name', { length: 255 }).notNull(),
+    location: varchar('location', { length: 50 }).notNull().unique(), // header, side, post
+    items: jsonb('items').$type<{
+        id: string
+        label: string
+        url: string
+        order: number
+        parentId?: string
+        icon?: string
+    }[]>().notNull().default([]),
+    active: boolean('active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
 // Quote Requests Table
 export const quoteRequests = pgTable('quote_requests', {
     id: uuid('id').defaultRandom().primaryKey(),

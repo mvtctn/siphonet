@@ -48,20 +48,20 @@ export function BlogPostDetail({ post, relatedPosts = [] }: BlogPostDetailProps)
             </div>
 
             {/* Article Header Section */}
-            <header className="pt-16 pb-12 md:pt-24 md:pb-20">
+            <header className="pt-12 pb-8 md:pt-16 md:pb-12">
                 <div className="container mx-auto px-4">
                     <div className="max-w-4xl mx-auto text-center">
-                        <div className="flex justify-center mb-8">
+                        <div className="flex justify-center mb-4">
                             <span className="px-4 py-1.5 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-primary/10">
                                 {post.category || 'Tin tức'}
                             </span>
                         </div>
 
-                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-slate-900 mb-8 leading-[1.15]">
+                        <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 mb-4 leading-[1.25]">
                             {post.title}
                         </h1>
 
-                        <p className="text-lg md:text-xl text-slate-500 font-medium max-w-2xl mx-auto mb-12 leading-relaxed opacity-80">
+                        <p className="text-base md:text-lg text-slate-500 font-medium max-w-2xl mx-auto mb-6 leading-relaxed opacity-80">
                             {post.excerpt}
                         </p>
 
@@ -86,8 +86,8 @@ export function BlogPostDetail({ post, relatedPosts = [] }: BlogPostDetailProps)
             </header>
 
             {/* Featured Image */}
-            <div className="container mx-auto px-4 mb-20">
-                <div className="max-w-6xl mx-auto relative aspect-[16/9] md:aspect-[21/9] rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200">
+            <div className="container mx-auto px-4 mb-12">
+                <div className="max-w-6xl mx-auto relative aspect-[16/9] md:aspect-[21/9] rounded-[2rem] overflow-hidden shadow-2xl shadow-slate-200">
                     <Image
                         src={post.featuredImageUrl || '/blog-placeholder.jpg'}
                         alt={post.title}
