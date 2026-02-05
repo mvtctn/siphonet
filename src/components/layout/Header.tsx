@@ -29,8 +29,8 @@ export function Header() {
     return (
         <>
             <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-                {/* Top Bar */}
-                <div className="bg-primary text-white text-sm hidden lg:block">
+                {/* Top Bar - Brand Gradient */}
+                <div className="bg-gradient-to-r from-primary-900 via-primary-800 to-primary text-white text-sm hidden lg:block border-b border-white/5">
                     <div className="container mx-auto px-4 py-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-4">
@@ -68,9 +68,10 @@ export function Header() {
                         <nav className="hidden lg:flex items-center gap-8">
                             <Link
                                 href="/"
-                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
                             >
                                 Trang chủ
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
                             </Link>
 
                             {/* Products Mega Menu */}
@@ -81,10 +82,11 @@ export function Header() {
                             >
                                 <Link
                                     href="/san-pham"
-                                    className="text-sm font-medium text-slate-700 hover:text-accent transition-colors flex items-center gap-1"
+                                    className="text-sm font-bold text-slate-800 hover:text-accent transition-all flex items-center gap-1 relative group"
                                 >
                                     Sản phẩm
                                     <ChevronDown className={`h-4 w-4 transition-transform ${isProductsMenuOpen ? 'rotate-180' : ''}`} />
+                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
                                 </Link>
 
                                 {/* Dropdown Menu */}
@@ -136,33 +138,38 @@ export function Header() {
 
                             <Link
                                 href="/du-an"
-                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
                             >
                                 Dự án
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
                             </Link>
                             <Link
                                 href="/dich-vu"
-                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
                             >
                                 Dịch vụ
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
                             </Link>
                             <Link
                                 href="/tin-tuc"
-                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
                             >
                                 Tin tức
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
                             </Link>
                             <Link
                                 href="/gioi-thieu"
-                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
                             >
                                 Giới thiệu
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
                             </Link>
                             <Link
                                 href="/lien-he"
-                                className="text-sm font-medium text-slate-700 hover:text-accent transition-colors"
+                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
                             >
                                 Liên hệ
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
                             </Link>
                         </nav>
 
