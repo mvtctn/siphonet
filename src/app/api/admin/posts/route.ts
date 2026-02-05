@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json()
-        // 1. Exclude 'featured' (column missing in DB)
+        // 1. Exclude 'featured', 'seo_score' (columns missing in DB)
         // 2. Map 'image' -> 'featured_image_url' (DB column name)
-        const { featured, image, ...postData } = body
+        const { featured, seo_score, image, ...postData } = body
 
         if (!postData.title) {
             return NextResponse.json({ error: 'Missing title' }, { status: 400 })
@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { id, featured, image, ...updates } = body
+        const { id, featured, seo_score, image, ...updates } = body
 
         if (!id) return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
 
