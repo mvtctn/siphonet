@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/auth'
+import { validateUploadedFile, sanitizeFileName } from '@/lib/fileValidation'
 import { NextRequest, NextResponse } from 'next/server'
 import { db, media } from '@/db'
 import sharp from 'sharp'
@@ -19,17 +20,26 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
         }
 
+        // SECURITY: Comprehensive file validation
+        const validationResult = await validateUploadedFile(file)
+        if (!validationResult.valid) {
+            return NextResponse.json({
+                error: validationResult.error || 'Invalid file'
+            }, { status: 400 })
+        }
+
         // Validate file type (allowing more than just images later if needed, but for now mostly images/videos)
-        const isImage = file.type.startsWith('image/')
-        const isVideo = file.type.startsWith('video/')
-        const isDocument = !isImage && !isVideo
+        const fileExt = validationResult.extension!
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt)
+        const isVideo = ['mp4', 'webm', 'mov'].includes(fileExt)
+        const isDocument = ['pdf'].includes(fileExt)
 
         // Create unique name and folder structure
         const now = new Date()
         const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-        const fileExt = file.name.split('.').pop()
         const randomStr = Math.random().toString(36).substring(2, 10)
-        let fileName = `${Date.now()}-${randomStr}.${fileExt}`
+        const sanitizedOriginalName = sanitizeFileName(file.name.split('.')[0])
+        let fileName = `${Date.now()}-${randomStr}-${sanitizedOriginalName}.${fileExt}`
 
         let buffer = Buffer.from(await file.arrayBuffer())
         let finalMimeType = file.type

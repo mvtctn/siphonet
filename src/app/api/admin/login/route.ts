@@ -25,15 +25,12 @@ export async function POST(request: NextRequest) {
             .single()
 
         if (error) {
-            console.error('Database error during login:', error)
-            // Identify connection issues specifically
-            if (error.message.includes('fetch failed') || error.code === 'PGRST102') {
-                return NextResponse.json(
-                    { error: 'Không thể kết nối tới cơ sở dữ liệu. Vui lòng kiểm tra cấu hình môi trường.' },
-                    { status: 500 }
-                )
+            // SECURITY: Don't log sensitive errors in production
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('Database error during login:', error)
             }
 
+            // SECURITY: Generic error message to prevent information disclosure
             return NextResponse.json(
                 { error: 'Email hoặc mật khẩu không đúng' },
                 { status: 401 }
@@ -76,9 +73,12 @@ export async function POST(request: NextRequest) {
         })
 
     } catch (error: any) {
-        console.error('Login error:', error)
+        // SECURITY: Don't log sensitive errors in production
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Login error:', error)
+        }
         return NextResponse.json(
-            { error: 'Đã xảy ra lỗi server' },
+            { error: 'Đã xảy ra lỗi. Vui lòng thử lại sau.' },
             { status: 500 }
         )
     }

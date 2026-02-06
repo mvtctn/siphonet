@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from './lib/auth'
+import { checkRateLimit, createRateLimitResponse, addRateLimitHeaders } from './lib/rateLimit'
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
+
+    // SECURITY: Rate limiting for all API routes
+    if (pathname.startsWith('/api')) {
+        const rateLimitResult = checkRateLimit(request)
+
+        if (!rateLimitResult.allowed) {
+            return createRateLimitResponse(rateLimitResult)
+        }
+    }
 
     // 1. Chỉ bảo vệ các route bắt đầu bằng /admin
     if (pathname.startsWith('/admin')) {
@@ -41,5 +51,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/admin/:path*'],
+    matcher: ['/admin/:path*', '/api/:path*'],
 }

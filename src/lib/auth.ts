@@ -1,14 +1,18 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 
-const SECRET_KEY = process.env.JWT_SECRET_KEY || 'your-secret-key-change-it'
+
+const SECRET_KEY = process.env.JWT_SECRET_KEY
+if (!SECRET_KEY) {
+    throw new Error('SECURITY ERROR: JWT_SECRET_KEY environment variable is required. Please set it in your .env.local file.')
+}
 const key = new TextEncoder().encode(SECRET_KEY)
 
 export async function signToken(payload: any) {
     return await new SignJWT(payload)
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
-        .setExpirationTime('24h')
+        .setExpirationTime('2h') // SECURITY: Reduced from 24h to 2h
         .sign(key)
 }
 
@@ -29,8 +33,9 @@ export async function minionLogin(userData: any) {
     const cookieStore = await cookies()
     cookieStore.set('admin_token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24, // 1 day
+        secure: true, // SECURITY: Always use secure cookies
+        sameSite: 'strict', // SECURITY: CSRF protection
+        maxAge: 60 * 60 * 2, // 2 hours (match JWT expiration)
         path: '/',
     })
 
