@@ -24,10 +24,10 @@ async function main() {
     try {
         console.log('Restoring default header menu items...')
 
-        // Use raw objects, postgres-js will handle JSONB
+        // Use sql.json() to ensure postgres-js handles it as JSONB
         const result = await sql`
             UPDATE menus 
-            SET items = ${defaultItems},
+            SET items = ${sql.json(defaultItems)},
                 style = 'list'
             WHERE location = 'header'
             RETURNING *
@@ -37,7 +37,7 @@ async function main() {
             console.log('Header menu not found, creating it...')
             await sql`
                 INSERT INTO menus (name, location, items, style)
-                VALUES ('Header Menu', 'header', ${defaultItems}, 'list')
+                VALUES ('Header Menu', 'header', ${sql.json(defaultItems)}, 'list')
             `
         }
 
@@ -52,7 +52,7 @@ async function main() {
 
         await sql`
             UPDATE menus 
-            SET items = ${postItems}
+            SET items = ${sql.json(postItems)}
             WHERE location = 'post'
         `
 
