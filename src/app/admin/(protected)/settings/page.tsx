@@ -416,6 +416,28 @@ export default function SettingsPage() {
                                         placeholder='meta name="google-site-verification" content="..."'
                                     />
                                 </div>
+
+                                <div className="pt-6 border-t border-slate-100">
+                                    <div className="p-6 bg-slate-50 rounded-3xl flex items-center justify-between border border-slate-200">
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-2 bg-white rounded-xl shadow-sm text-primary">
+                                                <Search size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-900">Sơ đồ trang web (Sitemap)</h3>
+                                                <p className="text-xs text-slate-500 font-medium">Cung cấp file XML để Google Console index website nhanh hơn.</p>
+                                            </div>
+                                        </div>
+                                        <a
+                                            href="/sitemap.xml"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition-all text-sm font-bold shadow-sm flex items-center gap-2"
+                                        >
+                                            Xem Sitemap
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
