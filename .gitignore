@@ -37,7 +37,7 @@ Thumbs.db
 *~
 
 # Payload
-media/
+/media/
 .payload/
 
 # TypeScript
