@@ -319,6 +319,7 @@ export const menus = pgTable('menus', {
     id: uuid('id').defaultRandom().primaryKey(),
     name: varchar('name', { length: 255 }).notNull(),
     location: varchar('location', { length: 50 }).notNull().unique(), // header, side, post
+    style: varchar('style', { length: 50 }).notNull().default('list'), // list, board, mega
     items: jsonb('items').$type<{
         id: string
         label: string
@@ -326,7 +327,10 @@ export const menus = pgTable('menus', {
         order: number
         parentId?: string
         icon?: string
+        description?: string
+        image?: string
     }[]>().notNull().default([]),
+    config: jsonb('config').$type<any>().default({}),
     active: boolean('active').default(true).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

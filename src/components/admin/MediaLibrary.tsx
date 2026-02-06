@@ -67,23 +67,45 @@ export function MediaLibrary({ onSelect, multiSelect = false, selectedUrls = [] 
         if (!e.target.files) return
         const files = Array.from(e.target.files)
         setIsUploading(true)
+        let successCount = 0
+        let failCount = 0
 
         try {
-            for (const file of files) {
+            // Upload in parallel groups (e.g., 3 at a time) or all at once? Let's do all for simplicity but track progress
+            const uploadPromises = files.map(async (file) => {
                 const formData = new FormData()
                 formData.append('file', file)
-                const res = await fetch('/api/admin/upload', {
-                    method: 'POST',
-                    body: formData
-                })
-                const data = await res.json()
-                if (data.success) {
-                    // Refresh after each upload or at end
+                try {
+                    const res = await fetch('/api/admin/upload', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    const data = await res.json()
+                    if (data.success) {
+                        successCount++
+                        return data.data
+                    } else {
+                        failCount++
+                        return null
+                    }
+                } catch (err) {
+                    failCount++
+                    return null
                 }
+            })
+
+            await Promise.all(uploadPromises)
+
+            if (successCount > 0) {
+                await fetchMedia()
             }
-            fetchMedia()
+
+            if (failCount > 0) {
+                alert(`Đã tải lên ${successCount} file thành công. ${failCount} file thất bại.`)
+            }
         } catch (error) {
-            alert('Upload failed')
+            console.error('Upload error:', error)
+            alert('Có lỗi nghiêm trọng xảy ra khi tải lên.')
         } finally {
             setIsUploading(false)
             if (fileInputRef.current) fileInputRef.current.value = ''

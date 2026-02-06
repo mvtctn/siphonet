@@ -24,19 +24,61 @@ export async function POST(request: NextRequest) {
         const isVideo = file.type.startsWith('video/')
         const isDocument = !isImage && !isVideo
 
-        // Create unique name
+        // Create unique name and folder structure
+        const now = new Date()
+        const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
         const fileExt = file.name.split('.').pop()
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${fileExt}`
-        const filePath = `uploads/${fileName}`
+        const randomStr = Math.random().toString(36).substring(2, 10)
+        let fileName = `${Date.now()}-${randomStr}.${fileExt}`
 
-        const buffer = Buffer.from(await file.arrayBuffer())
+        let buffer = Buffer.from(await file.arrayBuffer())
+        let finalMimeType = file.type
+        let width = null
+        let height = null
+
+        // Image Optimization
+        if (isImage) {
+            try {
+                const image = sharp(buffer)
+                const metadata = await image.metadata()
+
+                // Resize if too large (max 1920px width)
+                if (metadata.width && metadata.width > 1920) {
+                    image.resize(1920, null, { withoutEnlargement: true })
+                }
+
+                // Convert to WebP for better compression if not already or just compress JPEG
+                if (file.type === 'image/jpeg' || file.type === 'image/png') {
+                    // Decide: Keep original extension or convert to webp? 
+                    // For compatibility, let's keep original ext but compress.
+                    if (file.type === 'image/jpeg') {
+                        image.jpeg({ quality: 80, progressive: true })
+                    } else {
+                        image.png({ quality: 80, palette: true })
+                    }
+                }
+
+                const optimized = await image.toBuffer({ resolveWithObject: true })
+                buffer = Buffer.from(optimized.data)
+                width = optimized.info.width
+                height = optimized.info.height
+                finalMimeType = `image/${optimized.info.format}`
+
+                // Update fileName if format changed (optional, but good for consistency)
+                // fileName = fileName.split('.')[0] + '.' + optimized.info.format
+            } catch (e) {
+                console.error('Failed to optimize image:', e)
+            }
+        }
+
+        const filePath = `uploads/${yearMonth}/${fileName}`
 
         // Upload to Supabase Storage
         const { data, error } = await supabaseAdmin
             .storage
             .from('products')
             .upload(filePath, buffer, {
-                contentType: file.type,
+                contentType: finalMimeType,
                 upsert: false
             })
 
@@ -48,30 +90,17 @@ export async function POST(request: NextRequest) {
             .from('products')
             .getPublicUrl(filePath)
 
-        // Extract metadata for images
-        let width = null
-        let height = null
-        if (isImage) {
-            try {
-                const metadata = await sharp(buffer).metadata()
-                width = metadata.width
-                height = metadata.height
-            } catch (e) {
-                console.error('Failed to get image dimensions:', e)
-            }
-        }
-
         // Record in database
         const [record] = await db.insert(media).values({
             name: file.name,
-            fileName: fileName,
+            fileName: `${yearMonth}/${fileName}`,
             url: publicUrl,
             type: isImage ? 'image' : isVideo ? 'video' : 'document',
-            mimeType: file.type,
-            size: file.size,
+            mimeType: finalMimeType,
+            size: buffer.length,
             width,
             height,
-            altText: file.name,
+            altText: file.name.split('.')[0],
         }).returning()
 
         return NextResponse.json({ success: true, url: publicUrl, data: record })

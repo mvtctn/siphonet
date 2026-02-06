@@ -135,25 +135,27 @@ Xem [REACT_BEST_PRACTICES.md](./REACT_BEST_PRACTICES.md) để biết:
 ## 📋 Features
 
 ### ✅ Implemented
-- Next.js 15 project structure
-- Tailwind CSS với Navy & Cyan theme
-- Environment configuration
-- Supabase integration setup
-- React Best Practices guide
+- Next.js 15 project structure & Tailwind CSS (Navy & Cyan theme)
+- Supabase Integration (Database & Auth)
+- Full Public Pages (Home, Products, Projects, Blog, Contact, Cart)
+- Admin Dashboard (Post, Product, Category, Menu management)
+- Multi-language support (Vietnamese/English setup)
+- Mock & Real data integration via API routes
 
 ### 🚧 In Progress  
-- Payload CMS collections
-- Homepage components
-- Product catalog với technical specs filter
-- Projects showcase
-- E-commerce với PayOS
+- PayOS Checkout & Order Management
+- Supabase Storage for Image Uploads
+- Full i18n for dynamic content
 
 ### 📅 Planned
-- Team member profiles
-- Reviews & Ratings
-- FAQs với search
-- Blog/News section
-- SEO optimization
+- SEO Optimization (Sitemap, Metadata, JSON-LD)
+- Customer Accounts & Wishlist
+- Email/Telegram Notifications for Orders
+- Google Analytics integration
+
+### 📊 Project Architecture & Roadmap
+- [🗺️ Sơ đồ trang web (Sitemap)](./SITEMAP.md)
+- [📅 Lộ trình dự án (Roadmap)](./PROJECT_ROADMAP.md)
 
 ## 🗄️ Database Collections
 

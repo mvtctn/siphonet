@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { id, name, location, items, active } = body
+        const { id, name, location, items, style, config, active } = body
 
         if (!name || !location) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -43,6 +43,8 @@ export async function POST(request: NextRequest) {
             name,
             location,
             items: items || [],
+            style: style || 'list',
+            config: config || {},
             active: active ?? true,
             updated_at: new Date().toISOString(),
         }

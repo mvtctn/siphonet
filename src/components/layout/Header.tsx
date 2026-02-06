@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Phone, Mail, Menu, ChevronDown, Zap, Droplet, Waves, X, ShoppingBag, Receipt } from 'lucide-react'
+import { Phone, Mail, Menu, ChevronDown, ChevronRight, Zap, Droplet, Waves, X, ShoppingBag, Receipt } from 'lucide-react'
 import { mockCategories } from '@/lib/mock-data'
 
 import { useCartStore } from '@/store/useCartStore'
 
 export function Header() {
     const { getTotalItems } = useCartStore()
-    const [isProductsMenuOpen, setIsProductsMenuOpen] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [headerMenu, setHeaderMenu] = useState<any>(null)
+    const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
     const categoryIcons: Record<string, any> = {
         'Zap': Zap,
@@ -24,6 +25,30 @@ export function Header() {
 
     useEffect(() => {
         setMounted(true)
+        fetch('/api/admin/menus?location=header')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data.length > 0 && Array.isArray(data.data[0].items) && data.data[0].items.length > 0) {
+                    setHeaderMenu(data.data[0])
+                } else {
+                    // Fallback to default structure if no menu or empty items in DB
+                    setHeaderMenu({
+                        style: 'list',
+                        items: [
+                            { id: '1', label: 'Trang chủ', url: '/', order: 0 },
+                            { id: '2', label: 'Sản phẩm', url: '/san-pham', order: 1 },
+                            { id: '3', label: 'Dự án', url: '/du-an', order: 2 },
+                            { id: '4', label: 'Dịch vụ', url: '/dich-vu', order: 3 },
+                            { id: '5', label: 'Tin tức', url: '/tin-tuc', order: 4 },
+                            { id: '6', label: 'Giới thiệu', url: '/gioi-thieu', order: 5 },
+                            { id: '7', label: 'Liên hệ', url: '/lien-he', order: 6 },
+                        ]
+                    })
+                }
+            })
+            .catch(() => {
+                // Silently fallback or handle error
+            })
     }, [])
 
     return (
@@ -66,111 +91,147 @@ export function Header() {
 
                         {/* Desktop Navigation */}
                         <nav className="hidden lg:flex items-center gap-8">
-                            <Link
-                                href="/"
-                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
-                            >
-                                Trang chủ
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
-                            </Link>
+                            {(() => {
+                                if (!Array.isArray(headerMenu?.items)) return null
 
-                            {/* Products Mega Menu */}
-                            <div
-                                className="relative"
-                                onMouseEnter={() => setIsProductsMenuOpen(true)}
-                                onMouseLeave={() => setIsProductsMenuOpen(false)}
-                            >
-                                <Link
-                                    href="/san-pham"
-                                    className="text-sm font-bold text-slate-800 hover:text-accent transition-all flex items-center gap-1 relative group"
-                                >
-                                    Sản phẩm
-                                    <ChevronDown className={`h-4 w-4 transition-transform ${isProductsMenuOpen ? 'rotate-180' : ''}`} />
-                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
-                                </Link>
+                                const buildTree = (items: any[]) => {
+                                    const map = new Map()
+                                    const tree: any[] = []
+                                    items.forEach(item => map.set(item.id, { ...item, children: [] }))
+                                    items.forEach(item => {
+                                        const node = map.get(item.id)
+                                        if (item.parentId && map.has(item.parentId)) {
+                                            map.get(item.parentId).children.push(node)
+                                        } else {
+                                            tree.push(node)
+                                        }
+                                    })
+                                    return tree.sort((a, b) => a.order - b.order)
+                                }
 
-                                {/* Dropdown Menu */}
-                                <div className={`absolute left-1/2 -translate-x-1/2 top-full pt-2 transition-all duration-300 ${isProductsMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
-                                    }`}>
-                                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 min-w-[500px]">
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {/* All Products Link */}
+                                const menuTree = buildTree(headerMenu.items)
+
+                                const renderDropdown = (node: any, isSub = false) => {
+                                    const hasSubItems = node.children && node.children.length > 0
+                                    return (
+                                        <div
+                                            key={node.id}
+                                            className={`relative ${isSub ? 'group/sub' : 'group/menu'}`}
+                                            onMouseEnter={() => setHoveredItem(node.id)}
+                                            onMouseLeave={() => setHoveredItem(null)}
+                                        >
                                             <Link
-                                                href="/san-pham"
-                                                className="flex items-center gap-3 p-4 rounded-xl hover:bg-gradient-to-r hover:from-accent/10 hover:to-accent/5 transition-all group"
+                                                href={node.url}
+                                                className={`${isSub
+                                                    ? 'flex items-center justify-between px-5 py-3 text-sm font-medium text-slate-700 hover:text-accent hover:bg-slate-50 transition-colors'
+                                                    : 'text-sm font-bold text-slate-800 hover:text-accent transition-all flex items-center gap-1 relative group'}`}
                                             >
-                                                <div className="p-3 bg-gradient-to-br from-accent to-accent-600 rounded-lg group-hover:scale-110 transition-transform">
-                                                    <ShoppingBag className="h-5 w-5 text-white" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="font-bold text-slate-900 group-hover:text-accent transition-colors">
-                                                        Tất cả sản phẩm
-                                                    </h3>
-                                                    <p className="text-xs text-slate-500">Xem toàn bộ danh mục</p>
-                                                </div>
+                                                {node.label}
+                                                {!isSub && hasSubItems && <ChevronDown size={14} className={`transition-transform ${hoveredItem === node.id ? 'rotate-180' : ''}`} />}
+                                                {isSub && hasSubItems && <ChevronRight size={14} />}
+                                                {!isSub && <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />}
                                             </Link>
 
-                                            {/* Category Links */}
-                                            {mockCategories.map((category) => {
-                                                const IconComponent = categoryIcons[category.icon || 'Zap']
-                                                return (
-                                                    <Link
-                                                        key={category.id}
-                                                        href={`/san-pham?category=${category.slug}`}
-                                                        className="flex items-center gap-3 p-4 rounded-xl hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all group"
-                                                    >
-                                                        <div className="p-3 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-lg group-hover:scale-110 transition-transform">
-                                                            <IconComponent className="h-5 w-5 text-primary" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <h3 className="font-bold text-slate-900 group-hover:text-primary transition-colors">
-                                                                {category.name}
-                                                            </h3>
-                                                            <p className="text-xs text-slate-500 line-clamp-1">{category.description}</p>
-                                                        </div>
-                                                    </Link>
-                                                )
-                                            })}
+                                            {hasSubItems && (
+                                                <div className={`absolute ${isSub ? 'left-full top-0 ml-1' : 'left-0 top-full pt-2'} transition-all duration-300 ${hoveredItem === node.id ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
+                                                    <div className="bg-white rounded-2xl shadow-xl border border-slate-100 min-w-[220px] py-3 overflow-hidden">
+                                                        {node.children.sort((a: any, b: any) => a.order - b.order).map((child: any) => renderDropdown(child, true))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
+                                    )
+                                }
 
-                            <Link
-                                href="/du-an"
-                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
-                            >
-                                Dự án
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
-                            </Link>
-                            <Link
-                                href="/dich-vu"
-                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
-                            >
-                                Dịch vụ
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
-                            </Link>
-                            <Link
-                                href="/tin-tuc"
-                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
-                            >
-                                Tin tức
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
-                            </Link>
-                            <Link
-                                href="/gioi-thieu"
-                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
-                            >
-                                Giới thiệu
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
-                            </Link>
-                            <Link
-                                href="/lien-he"
-                                className="text-sm font-bold text-slate-800 hover:text-accent transition-all relative group"
-                            >
-                                Liên hệ
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
-                            </Link>
+                                return menuTree.map((item: any) => {
+                                    const hasChildren = item.children && item.children.length > 0
+
+                                    if (headerMenu.style === 'board' || headerMenu.style === 'mega') {
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className="relative group/menu"
+                                                onMouseEnter={() => setHoveredItem(item.id)}
+                                                onMouseLeave={() => setHoveredItem(null)}
+                                            >
+                                                <Link
+                                                    href={item.url}
+                                                    className="text-sm font-bold text-slate-800 hover:text-accent transition-all flex items-center gap-1 relative group"
+                                                >
+                                                    {item.label}
+                                                    {(hasChildren || headerMenu.style === 'mega') && (
+                                                        <ChevronDown className={`h-4 w-4 transition-transform ${hoveredItem === item.id ? 'rotate-180' : ''}`} />
+                                                    )}
+                                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
+                                                </Link>
+
+                                                <div className={`absolute left-1/2 -translate-x-1/2 top-full pt-2 transition-all duration-300 ${hoveredItem === item.id ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
+                                                    <div className={`bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-8 ${headerMenu.style === 'mega' ? 'min-w-[800px]' : 'min-w-[500px]'}`}>
+                                                        <div className={`grid ${headerMenu.style === 'mega' ? 'grid-cols-2' : 'grid-cols-1'} gap-8`}>
+                                                            <div className="space-y-6">
+                                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Khám phá {item.label}</div>
+                                                                {hasChildren ? (
+                                                                    <div className="grid grid-cols-2 gap-4">
+                                                                        {item.children.sort((a: any, b: any) => a.order - b.order).map((child: any) => (
+                                                                            <Link
+                                                                                key={child.id}
+                                                                                href={child.url}
+                                                                                className="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-all group/subitem"
+                                                                            >
+                                                                                <div className="h-10 w-10 bg-primary/5 rounded-lg flex items-center justify-center text-primary shrink-0 group-hover/subitem:bg-primary group-hover/subitem:text-white transition-colors">
+                                                                                    <ChevronRight size={16} />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <div className="text-sm font-bold text-slate-900 group-hover/subitem:text-accent transition-colors">{child.label}</div>
+                                                                                    {child.description && <div className="text-[10px] text-slate-400 line-clamp-1">{child.description}</div>}
+                                                                                </div>
+                                                                            </Link>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : (
+                                                                    <Link
+                                                                        href={item.url}
+                                                                        className="flex items-center gap-4 p-4 rounded-3xl hover:bg-slate-50 transition-all group/item"
+                                                                    >
+                                                                        {item.image ? (
+                                                                            <div className="h-16 w-16 rounded-2xl overflow-hidden border border-slate-100 shrink-0">
+                                                                                <img src={item.image} className="h-full w-full object-cover group-hover/item:scale-110 transition-transform" />
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="h-16 w-16 bg-accent/10 rounded-2xl flex items-center justify-center text-accent shrink-0">
+                                                                                <ShoppingBag size={24} />
+                                                                            </div>
+                                                                        )}
+                                                                        <div>
+                                                                            <h3 className="font-bold text-slate-900 group-hover/item:text-accent transition-colors">{item.label}</h3>
+                                                                            <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">{item.description || 'Xem chi tiết các nội dung liên quan.'}</p>
+                                                                        </div>
+                                                                    </Link>
+                                                                )}
+                                                            </div>
+
+                                                            {headerMenu.style === 'mega' && (
+                                                                <div className="relative rounded-3xl overflow-hidden group/img aspect-[4/3]">
+                                                                    <img src={item.image || '/logo.png'} className="absolute inset-0 w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700" />
+                                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
+                                                                        <div className="text-white font-bold text-xl">{item.label}</div>
+                                                                        <Link href={item.url} className="mt-4 inline-flex items-center gap-2 text-white text-xs font-bold bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl hover:bg-white hover:text-primary transition-all self-start">
+                                                                            Tìm hiểu thêm <ChevronRight size={14} />
+                                                                        </Link>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    }
+
+                                    // Default/List Style
+                                    return renderDropdown(item)
+                                })
+                            })()}
                         </nav>
 
                         {/* CTA Button & Cart */}
@@ -256,92 +317,78 @@ export function Header() {
                     </div>
 
                     <nav className="container mx-auto px-4 py-6 space-y-4">
-                        <Link
-                            href="/"
-                            className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Trang chủ
-                        </Link>
+                        {(() => {
+                            if (!Array.isArray(headerMenu?.items)) return null
 
-                        {/* Mobile Products Section */}
-                        <div className="border-t border-slate-100 pt-3">
-                            <Link
-                                href="/san-pham"
-                                className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Sản phẩm
-                            </Link>
-                            <div className="pl-4 space-y-2 mt-2">
-                                {mockCategories.map((category) => {
-                                    const IconComponent = categoryIcons[category.icon || 'Zap']
-                                    return (
+                            const buildTree = (items: any[]) => {
+                                const map = new Map()
+                                const tree: any[] = []
+                                items.forEach(item => map.set(item.id, { ...item, children: [] }))
+                                items.forEach(item => {
+                                    const node = map.get(item.id)
+                                    if (item.parentId && map.has(item.parentId)) {
+                                        map.get(item.parentId).children.push(node)
+                                    } else {
+                                        tree.push(node)
+                                    }
+                                })
+                                return tree.sort((a, b) => a.order - b.order)
+                            }
+
+                            const menuTree = buildTree(headerMenu.items)
+
+                            const renderMobileItem = (item: any, depth = 0) => {
+                                const hasChildren = item.children && item.children.length > 0
+                                return (
+                                    <div key={item.id} className={`${depth === 0 ? 'border-b border-slate-50 last:border-none pb-2' : 'ml-4 mt-2'}`}>
                                         <Link
-                                            key={category.id}
-                                            href={`/san-pham?category=${category.slug}`}
-                                            className="flex items-center gap-3 py-2 text-sm text-slate-600 hover:text-accent transition-colors"
+                                            href={item.url}
+                                            className={`flex items-center gap-4 py-3 px-2 text-slate-800 hover:text-accent transition-all active:bg-slate-50 rounded-2xl ${depth === 0 ? 'font-bold' : 'font-medium text-sm'}`}
                                             onClick={() => setIsMobileMenuOpen(false)}
                                         >
-                                            <div className="p-1.5 bg-slate-50 rounded-md">
-                                                <IconComponent className="h-4 w-4 text-slate-500" />
+                                            {item.image && depth === 0 ? (
+                                                <div className="h-10 w-10 rounded-xl overflow-hidden border border-slate-100 shrink-0 shadow-sm">
+                                                    <img src={item.image} className="h-full w-full object-cover" />
+                                                </div>
+                                            ) : depth === 0 && (
+                                                <div className="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
+                                                    <ChevronRight size={18} />
+                                                </div>
+                                            )}
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    {item.label}
+                                                </div>
+                                                {item.description && depth === 0 && (
+                                                    <div className="text-[10px] text-slate-400 font-medium line-clamp-1 mt-0.5">{item.description}</div>
+                                                )}
                                             </div>
-                                            {category.name}
+                                            {hasChildren ? <ChevronDown size={14} className="text-slate-300" /> : <ChevronRight size={16} className="text-slate-300" />}
                                         </Link>
-                                    )
-                                })}
-                            </div>
-                        </div>
+                                        {hasChildren && (
+                                            <div className="space-y-1">
+                                                {item.children.map((child: any) => renderMobileItem(child, depth + 1))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            }
 
-                        <Link
-                            href="/du-an"
-                            className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors border-t border-slate-100 pt-3"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Dự án
-                        </Link>
-                        {/* Other links... */}
-                        <Link
-                            href="/dich-vu"
-                            className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Dịch vụ
-                        </Link>
-                        <Link
-                            href="/tin-tuc"
-                            className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Tin tức
-                        </Link>
-                        <Link
-                            href="/gioi-thieu"
-                            className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Giới thiệu
-                        </Link>
-                        <Link
-                            href="/lien-he"
-                            className="block py-3 text-slate-700 hover:text-accent font-medium transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Liên hệ
-                        </Link>
+                            return menuTree.map((item: any) => renderMobileItem(item))
+                        })()}
 
-                        <div className="pt-4 mt-4 border-t border-slate-100">
-                            <div className="grid grid-cols-2 gap-3">
+                        <div className="pt-8 mt-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <Link
                                     href="/bao-gia"
-                                    className="px-4 py-3 bg-accent text-white text-center font-medium rounded-lg hover:bg-accent-600 transition-colors"
+                                    className="px-6 py-4 bg-accent text-white text-center font-bold rounded-2xl hover:bg-accent-600 transition-all shadow-lg shadow-accent/20"
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >
                                     Báo giá
                                 </Link>
                                 <a
-                                    href="tel:02432001234"
-                                    className="px-4 py-3 bg-slate-100 text-slate-700 text-center font-medium rounded-lg hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
+                                    href="tel:0913381683"
+                                    className="px-6 py-4 bg-slate-900 text-white text-center font-bold rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
                                 >
                                     <Phone className="h-4 w-4" />
                                     Gọi ngay
