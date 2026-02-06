@@ -23,6 +23,7 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
 
     const [editorMode, setEditorMode] = useState<'html' | 'visual'>('html')
     const visualRef = useRef<HTMLDivElement>(null)
+    const savedRange = useRef<Range | null>(null)
     const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false)
 
     const [isLoading, setIsLoading] = useState(!isNew)
@@ -110,7 +111,11 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
 
     const execCommand = (command: string, value: string = '') => {
         if (editorMode === 'visual') {
-            document.execCommand(command, false, value)
+            if (visualRef.current) {
+                visualRef.current.focus()
+                restoreSelection()
+                document.execCommand(command, false, value)
+            }
         } else {
             const tags: Record<string, [string, string]> = {
                 'bold': ['<strong>', '</strong>'],
@@ -150,12 +155,32 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
         }, 0)
     }
 
+    const saveSelection = () => {
+        if (editorMode === 'visual') {
+            const selection = window.getSelection()
+            if (selection && selection.rangeCount > 0) {
+                savedRange.current = selection.getRangeAt(0)
+            }
+        }
+    }
+
+    const restoreSelection = () => {
+        if (editorMode === 'visual' && savedRange.current) {
+            const selection = window.getSelection()
+            if (selection) {
+                selection.removeAllRanges()
+                selection.addRange(savedRange.current)
+            }
+        }
+    }
+
     const handleInsertMedia = (url: string) => {
         const html = `<img src="${url}" alt="" class="max-w-full h-auto rounded-3xl shadow-xl my-10 mx-auto block" />\n`
 
         if (editorMode === 'visual') {
             if (visualRef.current) {
                 visualRef.current.focus()
+                restoreSelection()
                 document.execCommand('insertHTML', false, html)
             }
         } else {
@@ -282,47 +307,48 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
                         <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap items-center gap-1">
                             {/* Group: History */}
                             <div className="flex items-center gap-0.5 mr-2">
-                                <button onClick={() => execCommand('undo')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Hoàn tác (Ctrl+Z)"><Undo2 className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('redo')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Làm lại (Ctrl+Y)"><Redo2 className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('undo'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Hoàn tác (Ctrl+Z)"><Undo2 className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('redo'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Làm lại (Ctrl+Y)"><Redo2 className="h-4 w-4" /></button>
                             </div>
                             <div className="w-px h-6 bg-slate-300 mx-1" />
 
                             {/* Group: Blocks */}
                             <div className="flex items-center gap-0.5 mr-2">
-                                <button onClick={() => execCommand('formatBlock', 'h2')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 2"><Hash className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('formatBlock', 'h3')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 3"><Type className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('formatBlock', 'blockquote')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Trích dẫn"><Quote className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('formatBlock', 'h2'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 2"><Hash className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('formatBlock', 'h3'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 3"><Type className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('formatBlock', 'blockquote'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Trích dẫn"><Quote className="h-4 w-4" /></button>
                             </div>
                             <div className="w-px h-6 bg-slate-300 mx-1" />
 
                             {/* Group: Inline Styling */}
                             <div className="flex items-center gap-0.5 mr-2">
-                                <button onClick={() => execCommand('bold')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In đậm (Ctrl+B)"><Bold className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('italic')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In nghiêng (Ctrl+I)"><Italic className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('underline')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch chân (Ctrl+U)"><Underline className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('strikeThrough')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch ngang"><Strikethrough className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('formatBlock', 'code')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Mã code"><Code className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('bold'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In đậm (Ctrl+B)"><Bold className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('italic'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In nghiêng (Ctrl+I)"><Italic className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('underline'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch chân (Ctrl+U)"><Underline className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('strikeThrough'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch ngang"><Strikethrough className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('formatBlock', 'code'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Mã code"><Code className="h-4 w-4" /></button>
                             </div>
                             <div className="w-px h-6 bg-slate-300 mx-1" />
 
                             {/* Group: Alignment */}
                             <div className="flex items-center gap-0.5 mr-2">
-                                <button onClick={() => execCommand('justifyLeft')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn trái"><AlignLeft className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('justifyCenter')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn giữa"><AlignCenter className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('justifyRight')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn phải"><AlignRight className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('justifyFull')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn đều"><AlignJustify className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('justifyLeft'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn trái"><AlignLeft className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('justifyCenter'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn giữa"><AlignCenter className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('justifyRight'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn phải"><AlignRight className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('justifyFull'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn đều"><AlignJustify className="h-4 w-4" /></button>
                             </div>
                             <div className="w-px h-6 bg-slate-300 mx-1" />
 
                             {/* Group: Lists & Others */}
                             <div className="flex items-center gap-0.5 mr-2">
-                                <button onClick={() => execCommand('insertUnorderedList')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Danh sách dấu chấm"><List className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('createLink', prompt('Nhập địa chỉ liên kết:') || '#')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Chèn liên kết"><LinkIcon className="h-4 w-4" /></button>
-                                <button onClick={() => execCommand('insertHorizontalRule')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Đường kẻ ngang"><Minus className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('insertUnorderedList'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Danh sách dấu chấm"><List className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('createLink', prompt('Nhập địa chỉ liên kết:') || '#'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Chèn liên kết"><LinkIcon className="h-4 w-4" /></button>
+                                <button onMouseDown={(e) => { e.preventDefault(); execCommand('insertHorizontalRule'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Đường kẻ ngang"><Minus className="h-4 w-4" /></button>
                                 <button
                                     type="button"
-                                    onClick={(e) => {
+                                    onMouseDown={(e) => {
                                         e.preventDefault();
+                                        saveSelection();
                                         setIsShowLibraryModal(true);
                                     }}
                                     className="p-2 hover:bg-white rounded-lg text-emerald-600 transition-all hover:text-emerald-700 active:scale-90"

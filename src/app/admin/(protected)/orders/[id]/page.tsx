@@ -21,12 +21,15 @@ import {
     Building2,
     Hash,
     Package,
-    Loader2
+    Loader2,
+    FileText,
+    ChevronDown
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
+import { generateInvoice, generateDeliveryNote, generateShippingLabel, generateAllDocuments } from '@/lib/generateOrderPDF'
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: orderId } = use(params)
@@ -36,6 +39,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     const [isLoading, setIsLoading] = useState(true)
     const [isUpdating, setIsUpdating] = useState(false)
     const [notes, setNotes] = useState('')
+    const [showPdfMenu, setShowPdfMenu] = useState(false)
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -54,6 +59,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         }
         fetchOrder()
     }, [orderId])
+
+    // Close PDF menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement
+            if (showPdfMenu && !target.closest('.pdf-dropdown-container')) {
+                setShowPdfMenu(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [showPdfMenu])
 
     const handleStatusUpdate = async (newStatus: string) => {
         setIsUpdating(true)
@@ -77,8 +95,32 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         alert('Đã lưu ghi chú thành công!')
     }
 
-    const handlePrint = () => {
-        window.print()
+    const handleGeneratePDF = async (type: 'invoice' | 'delivery' | 'shipping' | 'all') => {
+        if (!order) return
+
+        setIsGeneratingPdf(true)
+        setShowPdfMenu(false)
+
+        try {
+            switch (type) {
+                case 'invoice':
+                    await generateInvoice(order)
+                    break
+                case 'delivery':
+                    await generateDeliveryNote(order)
+                    break
+                case 'shipping':
+                    await generateShippingLabel(order)
+                    break
+                case 'all':
+                    await generateAllDocuments(order)
+                    break
+            }
+        } catch (error) {
+            console.error('PDF generation failed:', error)
+        } finally {
+            setIsGeneratingPdf(false)
+        }
     }
 
     const handleOpenMap = () => {
@@ -127,13 +169,73 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={handlePrint}
-                            className="hidden md:flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 font-bold text-sm transition-colors border border-slate-200 rounded-xl bg-white hover:bg-slate-50"
-                        >
-                            <Printer className="h-4 w-4" />
-                            In hóa đơn
-                        </button>
+                        {/* PDF Export Dropdown */}
+                        <div className="relative pdf-dropdown-container">
+                            <button
+                                onClick={() => setShowPdfMenu(!showPdfMenu)}
+                                disabled={isGeneratingPdf}
+                                className="hidden md:flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 font-bold text-sm transition-colors border border-slate-200 rounded-xl bg-white hover:bg-slate-50 disabled:opacity-50"
+                            >
+                                {isGeneratingPdf ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Đang tạo PDF...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FileText className="h-4 w-4" />
+                                        Xuất PDF
+                                        <ChevronDown className="h-3 w-3" />
+                                    </>
+                                )}
+                            </button>
+
+                            {showPdfMenu && !isGeneratingPdf && (
+                                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                                    <button
+                                        onClick={() => handleGeneratePDF('invoice')}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    >
+                                        <FileText className="h-4 w-4 text-blue-500" />
+                                        <div className="text-left">
+                                            <div className="font-bold">Hóa đơn</div>
+                                            <div className="text-xs text-slate-400">Invoice</div>
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() => handleGeneratePDF('delivery')}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    >
+                                        <Package className="h-4 w-4 text-red-500" />
+                                        <div className="text-left">
+                                            <div className="font-bold">Phiếu xuất kho</div>
+                                            <div className="text-xs text-slate-400">Delivery Note</div>
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() => handleGeneratePDF('shipping')}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    >
+                                        <Truck className="h-4 w-4 text-green-500" />
+                                        <div className="text-left">
+                                            <div className="font-bold">Bản giao hàng</div>
+                                            <div className="text-xs text-slate-400">Shipping Label</div>
+                                        </div>
+                                    </button>
+                                    <div className="h-px bg-slate-200 my-2" />
+                                    <button
+                                        onClick={() => handleGeneratePDF('all')}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/5 transition-colors"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        <div className="text-left">
+                                            <div>Tải tất cả (3 file)</div>
+                                            <div className="text-xs text-slate-400 font-normal">Download All</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                         <div className="h-6 w-px bg-slate-200 mx-2" />
                         <select
                             value={order.status}

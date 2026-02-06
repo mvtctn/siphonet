@@ -31,7 +31,9 @@
     "cookies-next": "^6.1.1",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.36.0",
+    "html2canvas": "^1.4.1",
     "jose": "^6.1.3",
+    "jspdf": "^4.1.0",
     "lucide-react": "^0.469.0",
     "next": "^16.1.6",
     "nodemailer": "^6.9.0",
@@ -46,6 +48,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
+    "@types/jspdf": "^2.0.0",
     "@types/node": "^22.10.2",
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^19.0.0",

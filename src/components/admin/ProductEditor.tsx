@@ -80,6 +80,7 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
     const [editorMode, setEditorMode] = useState<'html' | 'visual'>('visual')
     const visualRef = useRef<HTMLDivElement>(null)
     const contentRef = useRef<HTMLTextAreaElement>(null)
+    const savedRange = useRef<Range | null>(null)
 
     // Quick add category
     const handleAddCategory = async () => {
@@ -165,21 +166,25 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
 
     const execCommand = (command: string, value: string = '') => {
         if (editorMode === 'visual') {
-            document.execCommand(command, false, value)
+            if (visualRef.current) {
+                visualRef.current.focus()
+                restoreSelection()
+                document.execCommand(command, false, value)
+                // Sync state immediately
+                setProduct(prev => ({ ...prev, description: visualRef.current!.innerHTML }))
+            }
         } else {
             const tags: Record<string, [string, string]> = {
-                'bold': ['<strong>', '</strong>'],
-                'italic': ['<em>', '</em>'],
+                'bold': ['**', '**'],
+                'italic': ['*', '*'],
                 'underline': ['<u>', '</u>'],
-                'strikeThrough': ['<del>', '</del>'],
-                'formatBlock:h2': ['<h2>', '</h2>'],
-                'formatBlock:h3': ['<h3>', '</h3>'],
-                'formatBlock:h4': ['<h4>', '</h4>'],
-                'formatBlock:blockquote': ['<blockquote>', '</blockquote>'],
-                'formatBlock:p': ['<p>', '</p>'],
-                'insertUnorderedList': ['<ul><li>', '</li></ul>'],
-                'createLink': ['<a href="#">', '</a>'],
-                'insertHorizontalRule': ['<hr />', ''],
+                'strikeThrough': ['~~', '~~'],
+                'formatBlock:h2': ['## ', ''],
+                'formatBlock:h3': ['### ', ''],
+                'formatBlock:blockquote': ['> ', ''],
+                'insertUnorderedList': ['- ', ''],
+                'createLink': ['[', '](url)'],
+                'insertHorizontalRule': ['\n---\n', ''],
             }
             const [open, close] = tags[command] || tags[`${command}:${value}`] || ['', '']
             insertTag(open, close)
@@ -203,18 +208,85 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
         }, 0)
     }
 
+    const saveSelection = () => {
+        if (editorMode === 'visual') {
+            const selection = window.getSelection()
+            if (selection && selection.rangeCount > 0) {
+                savedRange.current = selection.getRangeAt(0)
+            }
+        }
+    }
+
+    const restoreSelection = () => {
+        if (editorMode === 'visual' && savedRange.current) {
+            const selection = window.getSelection()
+            if (selection) {
+                selection.removeAllRanges()
+                selection.addRange(savedRange.current)
+            }
+        }
+    }
+
     const handleInsertMedia = (url: string) => {
         const html = `<img src="${url}" alt="" class="max-w-full h-auto rounded-3xl shadow-xl my-10 mx-auto block" />\n`
 
         if (editorMode === 'visual') {
             if (visualRef.current) {
                 visualRef.current.focus()
-                document.execCommand('insertHTML', false, html)
+
+                let range: Range | null = null
+                const selection = window.getSelection()
+
+                if (savedRange.current) {
+                    range = savedRange.current
+                } else if (selection && selection.rangeCount > 0) {
+                    range = selection.getRangeAt(0)
+                }
+
+                if (range) {
+                    try {
+                        range.deleteContents()
+                        const el = document.createElement('div')
+                        el.innerHTML = html
+                        const frag = document.createDocumentFragment()
+                        let node, lastNode
+                        while ((node = el.firstChild)) {
+                            lastNode = frag.appendChild(node)
+                        }
+                        range.insertNode(frag)
+
+                        if (lastNode) {
+                            const newRange = document.createRange()
+                            newRange.setStartAfter(lastNode)
+                            newRange.collapse(true)
+                            selection?.removeAllRanges()
+                            selection?.addRange(newRange)
+                            savedRange.current = newRange
+                        }
+                    } catch (e) {
+                        console.error('Range insertion failed', e)
+                        document.execCommand('insertHTML', false, html)
+                    }
+                } else {
+                    document.execCommand('insertHTML', false, html)
+                }
+
+                // Sync state immediately
+                setProduct(prev => ({ ...prev, description: visualRef.current!.innerHTML }))
             }
         } else {
             if (contentRef.current) {
                 contentRef.current.focus()
-                insertTag(html, '')
+                const start = contentRef.current.selectionStart
+                const end = contentRef.current.selectionEnd
+                const text = contentRef.current.value
+                const newText = text.substring(0, start) + html + text.substring(end)
+                setProduct({ ...product, description: newText })
+                setTimeout(() => {
+                    if (contentRef.current) {
+                        contentRef.current.setSelectionRange(start + html.length, start + html.length)
+                    }
+                }, 0)
             }
         }
         setIsShowLibraryModal(false)
@@ -232,45 +304,46 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
         <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap items-center gap-1">
             {/* Group: History */}
             <div className="flex items-center gap-0.5 mr-2">
-                <button type="button" onClick={() => execCommand('undo')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Hoàn tác"><Undo2 className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('redo')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Làm lại"><Redo2 className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('undo'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Hoàn tác"><Undo2 className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('redo'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Làm lại"><Redo2 className="h-4 w-4" /></button>
             </div>
             <div className="w-px h-6 bg-slate-300 mx-1" />
 
             {/* Group: Blocks */}
             <div className="flex items-center gap-0.5 mr-2">
-                <button type="button" onClick={() => execCommand('formatBlock', 'h2')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 2"><Hash className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('formatBlock', 'h3')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 3"><Type className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('formatBlock', 'blockquote')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Trích dẫn"><Quote className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('formatBlock', 'h2'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 2"><Hash className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('formatBlock', 'h3'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 3"><Type className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('formatBlock', 'blockquote'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Trích dẫn"><Quote className="h-4 w-4" /></button>
             </div>
             <div className="w-px h-6 bg-slate-300 mx-1" />
 
             {/* Group: Inline Styling */}
             <div className="flex items-center gap-0.5 mr-2">
-                <button type="button" onClick={() => execCommand('bold')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In đậm"><Bold className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('italic')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In nghiêng"><Italic className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('underline')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch chân"><Underline className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('strikeThrough')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch ngang"><Strikethrough className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('bold'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In đậm"><Bold className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('italic'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In nghiêng"><Italic className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('underline'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch chân"><Underline className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('strikeThrough'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch ngang"><Strikethrough className="h-4 w-4" /></button>
             </div>
             <div className="w-px h-6 bg-slate-300 mx-1" />
 
             {/* Group: Alignment */}
             <div className="flex items-center gap-0.5 mr-2">
-                <button type="button" onClick={() => execCommand('justifyLeft')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn trái"><AlignLeft className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('justifyCenter')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn giữa"><AlignCenter className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('justifyRight')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn phải"><AlignRight className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('justifyLeft'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn trái"><AlignLeft className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('justifyCenter'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn giữa"><AlignCenter className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('justifyRight'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn phải"><AlignRight className="h-4 w-4" /></button>
             </div>
             <div className="w-px h-6 bg-slate-300 mx-1" />
 
             {/* Group: Lists & Media */}
             <div className="flex items-center gap-0.5 mr-2">
-                <button type="button" onClick={() => execCommand('insertUnorderedList')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Danh sách"><List className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('createLink', prompt('Nhập địa chỉ liên kết:') || '#')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Liên kết"><LinkIcon className="h-4 w-4" /></button>
-                <button type="button" onClick={() => execCommand('insertHorizontalRule')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Đường kẻ ngang"><Minus className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('insertUnorderedList'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Danh sách"><List className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('createLink'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Liên kết"><LinkIcon className="h-4 w-4" /></button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('insertHorizontalRule'); }} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Đường kẻ ngang"><Minus className="h-4 w-4" /></button>
                 <button
                     type="button"
-                    onClick={(e) => {
+                    onMouseDown={(e) => {
                         e.preventDefault();
+                        saveSelection();
                         setIsShowLibraryModal(true);
                     }}
                     className="p-2 hover:bg-white rounded-lg text-emerald-600 transition-all hover:text-emerald-700 active:scale-90"
@@ -281,7 +354,7 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
             </div>
             <div className="w-px h-6 bg-slate-300 mx-1" />
 
-            <button type="button" onClick={() => execCommand('removeFormat')} className="p-2 hover:bg-white rounded-lg text-red-500 transition-all hover:text-red-700 active:scale-90" title="Xóa định dạng"><Eraser className="h-4 w-4" /></button>
+            <button type="button" onMouseDown={(e) => { e.preventDefault(); execCommand('removeFormat'); }} className="p-2 hover:bg-white rounded-lg text-red-500 transition-all hover:text-red-700 active:scale-90" title="Xóa định dạng"><Eraser className="h-4 w-4" /></button>
 
             <div className="ml-auto flex items-center gap-3 bg-white/50 p-1 rounded-xl border border-slate-200 shadow-sm text-[10px] font-bold">
                 <button
