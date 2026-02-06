@@ -43,11 +43,11 @@ async function main() {
 
         console.log('Restoring post categories...')
         const postItems = [
-            { id: 'p1', label: 'Công ty', url: '/tin-tuc?category=Công ty', order: 0 },
-            { id: 'p2', label: 'Tuyển dụng', url: '/tin-tuc?category=Tuyển dụng', order: 1 },
-            { id: 'p3', label: 'Công nghệ', url: '/tin-tuc?category=Công nghệ', order: 2 },
-            { id: 'p4', label: 'Chuyên ngành', url: '/tin-tuc?category=Chuyên ngành', order: 3 },
-            { id: 'p5', label: 'Xã hội', url: '/tin-tuc?category=Xã hội', order: 4 }
+            { id: 'p1', label: 'Công ty', url: '/tin-tuc/chuyen-muc/cong-ty', order: 0 },
+            { id: 'p2', label: 'Tuyển dụng', url: '/tin-tuc/chuyen-muc/tuyen-dung', order: 1 },
+            { id: 'p3', label: 'Công nghệ', url: '/tin-tuc/chuyen-muc/cong-nghe', order: 2 },
+            { id: 'p4', label: 'Chuyên ngành', url: '/tin-tuc/chuyen-muc/chuyen-nganh', order: 3 },
+            { id: 'p5', label: 'Xã hội', url: '/tin-tuc/chuyen-muc/xa-hoi', order: 4 }
         ]
 
         await sql`

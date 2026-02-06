@@ -4,6 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Calendar, Clock, User, ArrowLeft, Facebook, Twitter, Link as LinkIcon, ChevronRight } from 'lucide-react'
 
+import { getCategorySlug } from '@/lib/blog'
+
 interface Post {
     id: string
     title: string
@@ -52,9 +54,12 @@ export function BlogPostDetail({ post, relatedPosts = [] }: BlogPostDetailProps)
                 <div className="container mx-auto px-4">
                     <div className="max-w-4xl mx-auto text-center">
                         <div className="flex justify-center mb-4">
-                            <span className="px-4 py-1.5 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-primary/10">
+                            <Link
+                                href={`/tin-tuc/chuyen-muc/${getCategorySlug(post.category)}`}
+                                className="px-4 py-1.5 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-primary/10 hover:bg-primary/10 transition-all font-bold"
+                            >
                                 {post.category || 'Tin tức'}
-                            </span>
+                            </Link>
                         </div>
 
                         <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 mb-4 leading-[1.25]">
@@ -161,7 +166,12 @@ export function BlogPostDetail({ post, relatedPosts = [] }: BlogPostDetailProps)
                                             />
                                         </div>
                                         <div className="p-6">
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-primary mb-3 block">{p.category}</span>
+                                            <Link
+                                                href={`/tin-tuc/chuyen-muc/${getCategorySlug(p.category)}`}
+                                                className="text-[9px] font-black uppercase tracking-widest text-primary mb-3 block hover:underline"
+                                            >
+                                                {p.category}
+                                            </Link>
                                             <h3 className="text-lg font-bold text-slate-900 line-clamp-2 group-hover:text-primary transition-colors leading-snug mb-4">
                                                 {p.title}
                                             </h3>

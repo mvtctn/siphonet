@@ -46,12 +46,23 @@ const CATEGORY_DETAILS: Record<string, { description: string, image: string }> =
     }
 }
 
-export function BlogPage() {
+import { CATEGORY_MAP, getCategorySlug } from '@/lib/blog'
+
+interface BlogPageProps {
+    category?: string
+}
+
+export function BlogPage({ category }: BlogPageProps) {
     const [posts, setPosts] = useState<Post[]>([])
     const [categories, setCategories] = useState<CategoryCount[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(category || null)
+
+    // Sync selectedCategory with prop if it changes
+    useEffect(() => {
+        setSelectedCategory(category || null)
+    }, [category])
 
     useEffect(() => {
         const fetchData = async () => {
@@ -127,23 +138,23 @@ export function BlogPage() {
                 <div className="container mx-auto px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center h-14 gap-8 overflow-x-auto no-scrollbar scroll-smooth">
-                            <button
-                                onClick={() => setSelectedCategory(null)}
+                            <Link
+                                href="/tin-tuc"
                                 className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all h-full flex items-center relative ${!selectedCategory ? 'text-primary' : 'text-slate-400 hover:text-slate-900'}`}
                             >
                                 Tất cả bài viết
                                 {!selectedCategory && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-                            </button>
+                            </Link>
                             {categories.map((cat) => (
-                                <button
+                                <Link
                                     key={cat.category}
-                                    onClick={() => setSelectedCategory(cat.category)}
+                                    href={`/tin-tuc/chuyen-muc/${getCategorySlug(cat.category)}`}
                                     className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all h-full flex items-center relative ${selectedCategory === cat.category ? 'text-primary' : 'text-slate-400 hover:text-slate-900'}`}
                                 >
                                     {cat.category}
                                     <span className="ml-2 text-[10px] text-slate-400 group-hover:text-slate-600">({cat.count})</span>
                                     {selectedCategory === cat.category && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-                                </button>
+                                </Link>
                             ))}
                         </div>
 
@@ -204,7 +215,12 @@ export function BlogPage() {
 
                                     <div className="p-6 flex flex-col flex-1">
                                         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                                            <span className="text-primary">{post.category}</span>
+                                            <Link
+                                                href={`/tin-tuc/chuyen-muc/${getCategorySlug(post.category)}`}
+                                                className="text-primary hover:underline transition-all"
+                                            >
+                                                {post.category}
+                                            </Link>
                                             <span className="h-1 w-1 bg-slate-200 rounded-full" />
                                             <span>{new Date(post.publishedDate).toLocaleDateString('vi-VN')}</span>
                                         </div>
