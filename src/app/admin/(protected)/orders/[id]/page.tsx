@@ -116,7 +116,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                         </Link>
                         <div className="h-6 w-px bg-slate-200 mx-2" />
                         <div className="flex flex-col">
-                            <h1 className="text-sm font-black text-slate-900 uppercase tracking-widest leading-none">
+                            <h1 className="text-sm font-bold text-slate-900 uppercase tracking-widest leading-none">
                                 Đơn hàng #{order.orderCode}
                             </h1>
                             <div className="flex items-center gap-2 mt-1">
@@ -195,7 +195,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                                             <td className="px-6 py-5 text-right font-medium text-slate-500 text-sm">
                                                 {new Intl.NumberFormat('vi-VN').format(item.price)}đ
                                             </td>
-                                            <td className="px-6 py-5 text-right font-black text-slate-900 text-sm">
+                                            <td className="px-6 py-5 text-right font-bold text-slate-900 text-sm">
                                                 {new Intl.NumberFormat('vi-VN').format(item.price * item.quantity)}đ
                                             </td>
                                         </tr>
@@ -215,7 +215,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                             <div className="h-px bg-slate-200 my-4" />
                             <div className="flex justify-between items-center capitalize">
                                 <span className="text-lg font-bold text-slate-900">Tổng cộng</span>
-                                <span className="text-2xl font-black text-primary">
+                                <span className="text-2xl font-bold text-primary">
                                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(order.totalAmount))}
                                 </span>
                             </div>
@@ -263,7 +263,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                                     </div>
                                     <div>
                                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Số điện thoại</div>
-                                        <div className="font-black text-primary">{order.customerPhone}</div>
+                                        <div className="font-bold text-primary">{order.customerPhone}</div>
                                     </div>
                                 </div>
                             </div>
@@ -333,13 +333,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-medium text-slate-400">Hình thức:</span>
-                                <span className="text-sm font-black">{order.paymentMethod}</span>
+                                <span className="text-sm font-bold">{order.paymentMethod}</span>
                             </div>
 
                             <div className="p-4 bg-white/5 rounded-2xl border border-white/10 space-y-3">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-medium text-slate-400">Trạng thái:</span>
-                                    <span className={`text-xs font-black uppercase tracking-widest ${order.paymentStatus === 'paid' ? 'text-emerald-400' : 'text-amber-400'
+                                    <span className={`text-xs font-bold uppercase tracking-widest ${order.paymentStatus === 'paid' ? 'text-emerald-400' : 'text-amber-400'
                                         }`}>
                                         {order.paymentStatus === 'paid' ? 'Đã thu tiền' : 'Chưa thanh toán'}
                                     </span>
@@ -358,14 +358,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                                     <button
                                         onClick={() => handlePaymentUpdate('paid')}
                                         disabled={isUpdating || order.paymentStatus === 'paid'}
-                                        className="py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all disabled:opacity-30"
+                                        className="py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all disabled:opacity-30"
                                     >
                                         Ghi nhận Đã trả
                                     </button>
                                     <button
                                         onClick={() => handlePaymentUpdate('pending')}
                                         disabled={isUpdating || order.paymentStatus === 'pending'}
-                                        className="py-2.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all disabled:opacity-30"
+                                        className="py-2.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all disabled:opacity-30"
                                     >
                                         Ghi nhận Chưa trả
                                     </button>

@@ -8,6 +8,7 @@ export async function GET() {
         const { data, error } = await supabase
             .from('categories')
             .select('*')
+            .eq('type', 'product')
             .order('name')
 
         if (error) {

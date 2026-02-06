@@ -1,8 +1,19 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { Phone, Mail, MapPin, Facebook, Youtube, Linkedin } from 'lucide-react'
+import { useSettings } from '@/components/providers/SettingsProvider'
 
 export function Footer() {
+    const settings = useSettings()
+    const siteInfo = settings?.site_info
+    const social = settings?.social
+
+    const siteTitle = siteInfo?.title || 'Công ty Cổ phần Siphonet'
+    const logoUrl = siteInfo?.logo_url || '/logo.png'
+    const siteDescription = siteInfo?.description || 'Chuyên cung cấp, lắp đặt thiết bị cơ điện M&E, hệ thống cấp thoát nước và xử lý nước.'
+
     return (
         <footer className="bg-primary text-white">
             {/* Main Footer */}
@@ -11,41 +22,53 @@ export function Footer() {
                     {/* Company Info */}
                     <div>
                         <Image
-                            src="/logo.png"
-                            alt="Siphonet"
+                            src={logoUrl}
+                            alt={siteTitle}
                             width={260}
                             height={52}
                             style={{ width: 'auto', height: 'auto' }}
                             className="h-[52px] brightness-0 invert mb-6"
                         />
                         <p className="text-slate-300 text-sm mb-4">
-                            Công ty Cổ phần Siphonet - Chuyên cung cấp, lắp đặt thiết bị cơ điện M&E, hệ thống cấp thoát nước và xử lý nước.
+                            {siteTitle} - {siteDescription}
                         </p>
                         <p className="text-slate-300 text-xs mb-4">
                             Mã số thuế: 0111350715
                         </p>
                         <div className="flex gap-3">
-                            <a
-                                href="#"
-                                className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent flex items-center justify-center transition-colors"
-                                aria-label="Facebook"
-                            >
-                                <Facebook className="h-4 w-4" />
-                            </a>
-                            <a
-                                href="#"
-                                className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent flex items-center justify-center transition-colors"
-                                aria-label="Youtube"
-                            >
-                                <Youtube className="h-4 w-4" />
-                            </a>
-                            <a
-                                href="#"
-                                className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent flex items-center justify-center transition-colors"
-                                aria-label="LinkedIn"
-                            >
-                                <Linkedin className="h-4 w-4" />
-                            </a>
+                            {social?.facebook && (
+                                <a
+                                    href={social.facebook}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent flex items-center justify-center transition-colors"
+                                    aria-label="Facebook"
+                                >
+                                    <Facebook className="h-4 w-4" />
+                                </a>
+                            )}
+                            {social?.youtube && (
+                                <a
+                                    href={social.youtube}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent flex items-center justify-center transition-colors"
+                                    aria-label="Youtube"
+                                >
+                                    <Youtube className="h-4 w-4" />
+                                </a>
+                            )}
+                            {social?.linkedin && (
+                                <a
+                                    href={social.linkedin}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-accent flex items-center justify-center transition-colors"
+                                    aria-label="LinkedIn"
+                                >
+                                    <Linkedin className="h-4 w-4" />
+                                </a>
+                            )}
                         </div>
                     </div>
 
@@ -115,19 +138,19 @@ export function Footer() {
                             <li className="flex items-start gap-3">
                                 <MapPin className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
                                 <span className="text-slate-300">
-                                    Tầng 4, Tòa nhà N07-B1, Khu đô thị mới Dịch Vọng, Quận Cầu Giấy, Hà Nội
+                                    {siteInfo?.address || 'Tầng 4, Tòa nhà N07-B1, Khu đô thị mới Dịch Vọng, Quận Cầu Giấy, Hà Nội'}
                                 </span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Phone className="h-5 w-5 text-accent flex-shrink-0" />
-                                <a href="tel:0123456789" className="text-slate-300 hover:text-accent transition-colors">
-                                    0913 381 683
+                                <a href={`tel:${siteInfo?.phone || '0913381683'}`} className="text-slate-300 hover:text-accent transition-colors">
+                                    {siteInfo?.phone || '0913 381 683'}
                                 </a>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail className="h-5 w-5 text-accent flex-shrink-0" />
-                                <a href="mailto:siphonetjsc@gmail.com" className="text-slate-300 hover:text-accent transition-colors">
-                                    siphonetjsc@gmail.com
+                                <a href={`mailto:${siteInfo?.email || 'siphonetjsc@gmail.com'}`} className="text-slate-300 hover:text-accent transition-colors">
+                                    {siteInfo?.email || 'siphonetjsc@gmail.com'}
                                 </a>
                             </li>
                         </ul>
@@ -140,7 +163,7 @@ export function Footer() {
                 <div className="container mx-auto px-4 py-6">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
                         <p>
-                            © {new Date().getFullYear()} Công ty Cổ phần Siphonet. All rights reserved.
+                            © {new Date().getFullYear()} {siteTitle}. All rights reserved.
                         </p>
                         <div className="flex gap-6">
                             <Link href="/chinh-sach-bao-mat" className="hover:text-accent transition-colors">

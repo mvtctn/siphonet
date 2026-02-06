@@ -1,16 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Search, SlidersHorizontal, Grid3x3, List, ArrowUpDown, Star, TrendingUp, Zap, Shield, Award } from 'lucide-react'
+import { useState, useEffect, Suspense } from 'react'
+import { Search, Grid3x3, List, ArrowUpDown, Star, Package, X, SlidersHorizontal } from 'lucide-react'
 import { ProductCard } from '@/components/products/ProductCard'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { ProductSidebar } from '@/components/products/ProductSidebar'
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name' | 'popular'
 
-export function ProductsPage() {
+interface ProductsPageProps {
+    initialCategory?: string
+}
+
+export function ProductsPage({ initialCategory = 'all' }: ProductsPageProps) {
+    const router = useRouter()
     const searchParams = useSearchParams()
-    const initialCategory = searchParams.get('category') || 'all'
-    const initialSearch = searchParams.get('search') || ''
+    const urlSearch = searchParams.get('search') || ''
 
     const [products, setProducts] = useState<any[]>([])
     const [categories, setCategories] = useState<any[]>([])
@@ -19,12 +24,19 @@ export function ProductsPage() {
 
     // Filters
     const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory)
-    const [searchQuery, setSearchQuery] = useState(initialSearch)
-    const [debouncedSearch, setDebouncedSearch] = useState(initialSearch)
+    const [searchQuery, setSearchQuery] = useState(urlSearch)
+    const [debouncedSearch, setDebouncedSearch] = useState(urlSearch)
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000])
     const [minRating, setMinRating] = useState<number>(0)
     const [sortBy, setSortBy] = useState<SortOption>('newest')
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false)
+
+    // Update selectedCategory if prop changes (for category pages)
+    useEffect(() => {
+        setSelectedCategory(initialCategory)
+        setIsMobileFilterOpen(false)
+    }, [initialCategory])
 
     // Debounce search
     useEffect(() => {
@@ -57,27 +69,19 @@ export function ProductsPage() {
         const fetchProducts = async () => {
             setIsLoadingProducts(true)
             try {
-                // Build query string
                 const params = new URLSearchParams()
-
                 if (selectedCategory !== 'all') {
-                    // find category id by slug or just use id if selectedCategory is id
                     const cat = categories.find(c => c.slug === selectedCategory || c.id === selectedCategory)
                     if (cat) params.append('category', cat.id)
                 }
-
                 if (debouncedSearch) params.append('search', debouncedSearch)
-
                 params.append('minPrice', priceRange[0].toString())
                 params.append('maxPrice', priceRange[1].toString())
                 params.append('sortBy', sortBy)
 
                 const response = await fetch(`/api/products?${params.toString()}`)
                 const result = await response.json()
-
-                if (result.success) {
-                    setProducts(result.data)
-                }
+                if (result.success) setProducts(result.data)
             } catch (error) {
                 console.error('Error fetching products:', error)
             } finally {
@@ -85,302 +89,230 @@ export function ProductsPage() {
             }
         }
 
-        fetchProducts()
-    }, [selectedCategory, debouncedSearch, priceRange, minRating, sortBy, categories])
+        if (!isLoading) fetchProducts()
+    }, [selectedCategory, debouncedSearch, priceRange, minRating, sortBy, categories, isLoading])
+
+    const handleCategoryChange = (slug: string) => {
+        setSelectedCategory(slug)
+        if (slug === 'all') {
+            router.push('/san-pham')
+        } else {
+            router.push(`/san-pham/danh-muc/${slug}`)
+        }
+    }
+
+    const handleReset = () => {
+        setSelectedCategory('all')
+        setSearchQuery('')
+        setPriceRange([0, 100000000])
+        setMinRating(0)
+        setIsMobileFilterOpen(false)
+        router.push('/san-pham')
+    }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-cyan-50/30">
-            {/* Hero Banner */}
-            <div className="relative bg-gradient-to-r from-primary via-blue-600 to-cyan-600 overflow-hidden">
-                {/* Background decoration */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-300 rounded-full blur-3xl"></div>
-                </div>
+        <div className="min-h-screen bg-[#F8FAFC]">
+            {/* Mobile Filter Drawer Overlay */}
+            {isMobileFilterOpen && (
+                <div
+                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] transition-opacity duration-300"
+                    onClick={() => setIsMobileFilterOpen(false)}
+                />
+            )}
 
-                <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
-                    <div className="max-w-3xl">
-                        <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-                            <Zap className="h-4 w-4 text-yellow-300" />
-                            <span className="text-white text-sm font-medium">Sản phẩm chính hãng</span>
-                        </div>
-                        <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-                            Thiết bị M&E <br />
-                            <span className="text-cyan-200">Chất lượng hàng đầu</span>
-                        </h1>
-                        <p className="text-xl text-white/90 mb-8 max-w-2xl">
-                            Cung cấp thiết bị cơ điện chính hãng từ các thương hiệu uy tín thế giới.
-                            Cam kết chất lượng, giá cạnh tranh và dịch vụ tận tâm.
-                        </p>
-
-                        {/* Trust badges */}
-                        <div className="flex flex-wrap gap-6">
-                            <div className="flex items-center gap-2 text-white">
-                                <Shield className="h-5 w-5 text-cyan-200" />
-                                <span className="font-medium">Bảo hành chính hãng</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-white">
-                                <Award className="h-5 w-5 text-cyan-200" />
-                                <span className="font-medium">Chứng nhận quốc tế</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-white">
-                                <TrendingUp className="h-5 w-5 text-cyan-200" />
-                                <span className="font-medium">Tư vấn miễn phí</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Category Quick Navigation */}
-            <div className="border-b bg-white shadow-sm sticky top-0 z-40">
-                <div className="container mx-auto px-4">
-                    <div className="flex items-center gap-4 overflow-x-auto py-4 scrollbar-hide">
+            {/* Mobile Filter Drawer Content */}
+            <div className={`fixed top-0 right-0 w-[85%] max-w-[400px] h-full bg-white z-[101] shadow-2xl transition-transform duration-500 ease-out transform ${isMobileFilterOpen ? 'translate-x-0' : 'translate-x-full'} overflow-y-auto`}>
+                <div className="p-8">
+                    <div className="flex items-center justify-between mb-8">
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">Bộ lọc sản phẩm</h2>
                         <button
-                            onClick={() => setSelectedCategory('all')}
-                            className={`flex-shrink-0 px-6 py-2.5 rounded-full font-medium transition-all duration-300 ${selectedCategory === 'all'
-                                ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-105'
-                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                }`}
+                            onClick={() => setIsMobileFilterOpen(false)}
+                            className="p-3 bg-slate-100 text-slate-500 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"
                         >
-                            Tất cả
+                            <X className="h-6 w-6" />
                         </button>
-                        {categories.map((category) => (
-                            <button
-                                key={category.id}
-                                onClick={() => setSelectedCategory(category.id)}
-                                className={`flex-shrink-0 px-6 py-2.5 rounded-full font-medium transition-all duration-300 ${selectedCategory === category.id
-                                    ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-105'
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                    }`}
+                    </div>
+                    <ProductSidebar
+                        categories={categories}
+                        selectedCategory={selectedCategory}
+                        onCategoryChange={handleCategoryChange}
+                        priceRange={priceRange}
+                        onPriceChange={setPriceRange}
+                        minRating={minRating}
+                        onRatingChange={setMinRating}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        onReset={handleReset}
+                    />
+                </div>
+            </div>
+
+            {/* Header Section */}
+            <div className="bg-white border-b border-slate-100">
+                <div className="max-w-[1400px] mx-auto px-6 py-12">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div>
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="h-8 w-1 bg-primary rounded-full" />
+                                <span className="text-xs font-bold text-primary uppercase tracking-[0.2em]">Cửa hàng trực tuyến</span>
+                            </div>
+                            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+                                {selectedCategory === 'all'
+                                    ? 'Tất cả sản phẩm'
+                                    : categories.find(c => c.slug === selectedCategory)?.name || 'Danh mục sản phẩm'
+                                }
+                            </h1>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4">
+                            <div className="bg-slate-50 p-1 rounded-2xl border border-slate-100 flex gap-1">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-2 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <Grid3x3 className="h-5 w-5" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-2 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <List className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                                className="bg-white border border-slate-200 rounded-2xl px-6 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer"
                             >
-                                {category.name}
-                            </button>
-                        ))}
+                                <option value="newest">Mới nhất</option>
+                                <option value="popular">Phổ biến nhất</option>
+                                <option value="price-asc">Giá: Thấp đến Cao</option>
+                                <option value="price-desc">Giá: Cao xuống Thấp</option>
+                                <option value="name">Tên sản phẩm A-Z</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-12">
-                <div className="grid lg:grid-cols-4 gap-8">
-                    {/* Advanced Sidebar Filters */}
-                    <aside className="lg:col-span-1">
-                        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 sticky top-28 space-y-8">
-                            <div className="flex items-center gap-2 pb-4 border-b">
-                                <SlidersHorizontal className="h-5 w-5 text-accent" />
-                                <h2 className="font-bold text-lg">Bộ lọc nâng cao</h2>
+            <div className="max-w-[1400px] mx-auto px-6 py-12">
+                <div className="grid lg:grid-cols-[280px_1fr] gap-12 items-start">
+                    {/* Sidebar */}
+                    <div className="sticky top-24 hidden lg:block">
+                        <ProductSidebar
+                            categories={categories}
+                            selectedCategory={selectedCategory}
+                            onCategoryChange={handleCategoryChange}
+                            priceRange={priceRange}
+                            onPriceChange={setPriceRange}
+                            minRating={minRating}
+                            onRatingChange={setMinRating}
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            onReset={handleReset}
+                        />
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="space-y-8">
+                        {/* Mobile Header (Search & Count) */}
+                        <div className="lg:hidden bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Tìm kiếm nhanh..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none"
+                                />
+                                <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                             </div>
-
-                            {/* Search */}
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                    Tìm kiếm sản phẩm
-                                </label>
-                                <div className="relative group">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-accent transition-colors" />
-                                    <input
-                                        type="text"
-                                        placeholder="Nhập tên sản phẩm..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Price Range */}
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                    Khoảng giá
-                                </label>
-                                <div className="space-y-3">
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100000000"
-                                        step="1000000"
-                                        value={priceRange[1]}
-                                        onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
-                                        className="w-full accent-accent"
-                                    />
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-slate-600">0đ</span>
-                                        <span className="font-semibold text-accent">
-                                            {new Intl.NumberFormat('vi-VN').format(priceRange[1])}đ
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Rating Filter */}
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                    Đánh giá tối thiểu
-                                </label>
-                                <div className="space-y-2">
-                                    {[5, 4, 3].map((rating) => (
-                                        <button
-                                            key={rating}
-                                            onClick={() => setMinRating(rating === minRating ? 0 : rating)}
-                                            className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${minRating === rating
-                                                ? 'bg-accent text-white shadow-md'
-                                                : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-1">
-                                                {Array.from({ length: rating }).map((_, i) => (
-                                                    <Star key={i} className={`h-4 w-4 ${minRating === rating ? 'fill-white' : 'fill-yellow-400'} ${minRating === rating ? 'text-white' : 'text-yellow-400'}`} />
-                                                ))}
-                                            </div>
-                                            <span className="text-sm font-medium">trở lên</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Reset Filters */}
-                            <button
-                                onClick={() => {
-                                    setSelectedCategory('all')
-                                    setSearchQuery('')
-                                    setPriceRange([0, 100000000])
-                                    setMinRating(0)
-                                }}
-                                className="w-full px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors font-medium"
-                            >
-                                Xóa bộ lọc
-                            </button>
-                        </div>
-                    </aside>
-
-                    {/* Products Section */}
-                    <main className="lg:col-span-3 space-y-6">
-                        {/* Toolbar */}
-                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                {/* Results count */}
-                                <p className="text-slate-600 font-medium">
-                                    Hiển thị <span className="text-accent font-bold">{products.length}</span> sản phẩm
-                                </p>
-
-                                <div className="flex items-center gap-3">
-                                    {/* Sort */}
-                                    <div className="flex items-center gap-2">
-                                        <ArrowUpDown className="h-4 w-4 text-slate-500" />
-                                        <select
-                                            value={sortBy}
-                                            onChange={(e) => setSortBy(e.target.value as SortOption)}
-                                            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                                        >
-                                            <option value="newest">Mới nhất</option>
-                                            <option value="popular">Phổ biến</option>
-                                            <option value="price-asc">Giá: Thấp → Cao</option>
-                                            <option value="price-desc">Giá: Cao → Thấp</option>
-                                            <option value="name">Tên A-Z</option>
-                                        </select>
-                                    </div>
-
-                                    {/* View mode toggle */}
-                                    <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-                                        <button
-                                            onClick={() => setViewMode('grid')}
-                                            className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-accent' : 'text-slate-500'
-                                                }`}
-                                        >
-                                            <Grid3x3 className="h-4 w-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => setViewMode('list')}
-                                            className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-accent' : 'text-slate-500'
-                                                }`}
-                                        >
-                                            <List className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </div>
+                            <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-widest px-2">
+                                <span>Kết quả: {products.length}</span>
+                                <button
+                                    onClick={() => setIsMobileFilterOpen(true)}
+                                    className="text-primary flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"
+                                >
+                                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                                    <span>Mở bộ lọc</span>
+                                </button>
                             </div>
                         </div>
 
-                        {/* Products Grid/List */}
+                        {/* Desktop Search Info */}
+                        <div className="hidden lg:flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
+                                <span>Tìm thấy</span>
+                                <span className="text-slate-900 font-bold">{products.length}</span>
+                                <span>sản phẩm cho yêu cầu của bạn</span>
+                            </div>
+                        </div>
+
+                        {/* Products Grid */}
                         {isLoadingProducts ? (
-                            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                            <div className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <div key={i} className="bg-white rounded-2xl p-4 h-96 animate-pulse">
-                                        <div className="w-full h-48 bg-slate-200 rounded-xl mb-4"></div>
-                                        <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
-                                        <div className="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
-                                        <div className="h-8 bg-slate-200 rounded w-full mt-auto"></div>
+                                    <div key={i} className="bg-white rounded-[2rem] p-6 h-[450px] animate-pulse border border-slate-50">
+                                        <div className="w-full aspect-square bg-slate-100 rounded-2xl mb-6" />
+                                        <div className="h-6 bg-slate-100 rounded-full w-3/4 mb-4" />
+                                        <div className="h-4 bg-slate-100 rounded-full w-1/2" />
                                     </div>
                                 ))}
                             </div>
                         ) : products.length > 0 ? (
-                            <div className={`grid gap-6 ${viewMode === 'grid'
-                                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-                                : 'grid-cols-1'
-                                }`}>
-                                {products.map((product: any, index: number) => (
+                            <div className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+                                {products.map((product, index) => (
                                     <div
                                         key={product.id}
-                                        className="animate-fade-in"
+                                        className="animate-in fade-in slide-in-from-bottom-4 duration-500"
                                         style={{ animationDelay: `${index * 50}ms` }}
                                     >
-                                        <ProductCard product={product} viewMode={viewMode} />
+                                        <ProductCard product={{
+                                            ...product,
+                                            category: product.categories?.name || 'Sản phẩm'
+                                        }} viewMode={viewMode} />
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center">
+                            <div className="bg-white rounded-[3rem] p-24 text-center border border-slate-100">
                                 <div className="max-w-md mx-auto">
-                                    <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <Search className="h-12 w-12 text-slate-400" />
+                                    <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8">
+                                        <Search size={40} />
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-700 mb-2">
+                                    <h3 className="text-xl font-bold text-slate-900 mb-4 tracking-tight">
                                         Không tìm thấy sản phẩm
                                     </h3>
-                                    <p className="text-slate-500 mb-6">
-                                        Hãy thử điều chỉnh bộ lọc hoặc tìm kiếm với từ khóa khác
+                                    <p className="text-slate-500 font-medium mb-8">
+                                        Rất tiếc, chúng tôi không tìm thấy kết quả phù hợp với lựa chọn của bạn. Vui lòng thử lại với bộ lọc khác.
                                     </p>
                                     <button
-                                        onClick={() => {
-                                            setSelectedCategory('all')
-                                            setSearchQuery('')
-                                            setPriceRange([0, 100000000])
-                                            setMinRating(0)
-                                        }}
-                                        className="px-6 py-3 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors font-medium"
+                                        onClick={handleReset}
+                                        className="px-10 py-4 bg-primary text-white rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-primary-700 transition-all shadow-xl shadow-primary/20 active:scale-95"
                                     >
                                         Xóa tất cả bộ lọc
                                     </button>
                                 </div>
                             </div>
                         )}
-                    </main>
+                    </div>
                 </div>
             </div>
 
             <style jsx>{`
-                @keyframes fade-in {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                input[type='range']::-webkit-slider-thumb {
+                    appearance: none;
+                    width: 20px;
+                    height: 20px;
+                    background: #2563eb;
+                    border: 4px solid #fff;
+                    border-radius: 50%;
+                    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+                    cursor: pointer;
+                    transition: all 0.2s ease;
                 }
-
-                .animate-fade-in {
-                    animation: fade-in 0.5s ease-out forwards;
-                }
-
-                .scrollbar-hide::-webkit-scrollbar {
-                    display: none;
-                }
-
-                .scrollbar-hide {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
+                input[type='range']::-webkit-slider-thumb:hover {
+                    transform: scale(1.15);
+                    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
                 }
             `}</style>
         </div>

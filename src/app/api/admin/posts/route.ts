@@ -11,11 +11,12 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url)
         const id = searchParams.get('id')
+        const isTrash = searchParams.get('trash') === 'true'
 
         if (id) {
             const { data, error } = await supabaseAdmin
                 .from('posts')
-                .select('*')
+                .select('*, categories!category_id(*)')
                 .eq('id', id)
                 .single()
 
@@ -23,10 +24,17 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ success: true, data })
         }
 
-        const { data, error } = await supabaseAdmin
+        let query = supabaseAdmin
             .from('posts')
-            .select('*')
-            .order('created_at', { ascending: false })
+            .select('*, categories!category_id(*)')
+
+        if (isTrash) {
+            query = query.not('deleted_at', 'is', null)
+        } else {
+            query = query.is('deleted_at', null)
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false })
 
         if (error) throw error
 
@@ -42,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { featured, seo_score, image, focus_keywords, ...postData } = body
+        const { featured, seo_score, image, focus_keywords, categoryId, category_id, ...postData } = body
 
         if (!postData.title) {
             return NextResponse.json({ error: 'Missing title' }, { status: 400 })
@@ -61,10 +69,12 @@ export async function POST(request: NextRequest) {
             .insert({
                 ...postData,
                 slug,
+                category_id: body.categoryId || body.category_id,
                 featured_image_url: image,
                 focus_keywords,
                 author: postData.author || session.name || 'Quản trị viên',
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                deleted_at: null
             })
             .select()
             .single()
@@ -84,18 +94,25 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { id, featured, seo_score, image, focus_keywords, ...updates } = body
+        const { id, featured, seo_score, image, focus_keywords, categoryId, category_id, restore, ...updates } = body
 
         if (!id) return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
 
+        const finalUpdates: any = {
+            ...updates,
+            category_id: categoryId || category_id,
+            featured_image_url: image,
+            focus_keywords,
+            updated_at: new Date().toISOString()
+        }
+
+        if (restore) {
+            finalUpdates.deleted_at = null
+        }
+
         const { data, error } = await supabaseAdmin
             .from('posts')
-            .update({
-                ...updates,
-                featured_image_url: image,
-                focus_keywords,
-                updated_at: new Date().toISOString()
-            })
+            .update(finalUpdates)
             .eq('id', id)
             .select()
             .single()
@@ -115,16 +132,24 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const permanent = searchParams.get('permanent') === 'true'
 
     if (!id) return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
 
     try {
-        const { error } = await supabaseAdmin
-            .from('posts')
-            .delete()
-            .eq('id', id)
-
-        if (error) throw error
+        if (permanent) {
+            const { error } = await supabaseAdmin
+                .from('posts')
+                .delete()
+                .eq('id', id)
+            if (error) throw error
+        } else {
+            const { error } = await supabaseAdmin
+                .from('posts')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', id)
+            if (error) throw error
+        }
 
         return NextResponse.json({ success: true })
     } catch (error: any) {

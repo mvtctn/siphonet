@@ -32,19 +32,25 @@ export async function PUT(
     try {
         const { id } = await params
         const body = await request.json()
-        const { title, slug, layout, meta_title, meta_description, status } = body
+        const { title, slug, layout, meta_title, meta_description, status, restore } = body
+
+        const updateData: any = {
+            title,
+            slug,
+            layout,
+            meta_title,
+            meta_description,
+            status,
+            updated_at: new Date().toISOString()
+        }
+
+        if (restore) {
+            updateData.deleted_at = null
+        }
 
         const { data, error } = await supabase
             .from('pages')
-            .update({
-                title,
-                slug,
-                layout,
-                meta_title,
-                meta_description,
-                status,
-                updated_at: new Date().toISOString()
-            })
+            .update(updateData)
             .eq('id', id)
             .select()
             .single()
@@ -65,17 +71,25 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params
-        const { error } = await supabase
-            .from('pages')
-            .delete()
-            .eq('id', id)
+        const { searchParams } = new URL(request.url)
+        const permanent = searchParams.get('permanent') === 'true'
 
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 })
+        if (permanent) {
+            const { error } = await supabase
+                .from('pages')
+                .delete()
+                .eq('id', id)
+            if (error) throw error
+        } else {
+            const { error } = await supabase
+                .from('pages')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', id)
+            if (error) throw error
         }
 
-        return NextResponse.json({ success: true, message: 'Page deleted' })
+        return NextResponse.json({ success: true, message: permanent ? 'Page deleted permanently' : 'Page moved to trash' })
     } catch (error: any) {
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
     }
 }

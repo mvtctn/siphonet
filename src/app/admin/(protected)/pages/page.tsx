@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Edit2, Trash2, Globe, FileText, Search, Loader2, Filter, MoreHorizontal, User, Calendar, CheckCircle2 } from 'lucide-react'
 
-type PageStatus = 'all' | 'published' | 'draft'
+type PageStatus = 'all' | 'published' | 'draft' | 'trash'
 
 export default function AdminPages() {
     const [pages, setPages] = useState<any[]>([])
@@ -14,12 +14,13 @@ export default function AdminPages() {
 
     useEffect(() => {
         fetchPages()
-    }, [])
+    }, [statusFilter])
 
     const fetchPages = async () => {
         setIsLoading(true)
         try {
-            const response = await fetch('/api/admin/pages')
+            const url = statusFilter === 'trash' ? '/api/admin/pages?trash=true' : '/api/admin/pages'
+            const response = await fetch(url)
             const result = await response.json()
             if (result.success) {
                 setPages(result.data)
@@ -35,16 +36,18 @@ export default function AdminPages() {
         const matchesSearch = page.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             page.slug.toLowerCase().includes(searchQuery.toLowerCase())
 
-        const matchesStatus = statusFilter === 'all' || page.status === statusFilter
+        const matchesStatus = statusFilter === 'all' || statusFilter === 'trash' || page.status === statusFilter
 
         return matchesSearch && matchesStatus
     })
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa trang này?')) return
+    const handleDelete = async (id: string, permanent = false) => {
+        const msg = permanent ? 'Bạn có chắc chắn muốn XÓA VĨNH VIỄN trang này?' : 'Bạn có chắc chắn muốn đưa trang này vào thùng rác?'
+        if (!confirm(msg)) return
 
         try {
-            const response = await fetch(`/api/admin/pages/${id}`, {
+            const url = permanent ? `/api/admin/pages/${id}?permanent=true` : `/api/admin/pages/${id}`
+            const response = await fetch(url, {
                 method: 'DELETE'
             })
             const result = await response.json()
@@ -56,17 +59,34 @@ export default function AdminPages() {
         }
     }
 
+    const handleRestore = async (id: string) => {
+        try {
+            const response = await fetch(`/api/admin/pages/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ restore: true })
+            })
+            const result = await response.json()
+            if (result.success) {
+                setPages(pages.filter(p => p.id !== id))
+            }
+        } catch (error) {
+            console.error('Failed to restore page', error)
+        }
+    }
+
     const counts = {
         all: pages.length,
         published: pages.filter(p => p.status === 'published').length,
-        draft: pages.filter(p => p.status === 'draft').length
+        draft: pages.filter(p => p.status === 'draft').length,
+        trash: pages.filter(p => p.deleted_at).length
     }
 
     return (
         <div className="p-8 max-w-[1600px] mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Trang tĩnh</h1>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Trang tĩnh</h1>
                     <p className="text-slate-500 mt-1">Xây dựng và quản lý các trang nội dung cho website</p>
                 </div>
                 <Link
@@ -97,6 +117,12 @@ export default function AdminPages() {
                     className={`pb-2 border-b-2 transition-colors ${statusFilter === 'draft' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
                 >
                     Bản nháp <span className="ml-1 text-slate-400 font-normal">({counts.draft})</span>
+                </button>
+                <button
+                    onClick={() => setStatusFilter('trash')}
+                    className={`pb-2 border-b-2 transition-colors ${statusFilter === 'trash' ? 'border-red-500 text-red-500' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+                >
+                    Thùng rác <span className="ml-1 text-slate-400 font-normal">({counts.trash})</span>
                 </button>
             </div>
 
@@ -168,11 +194,21 @@ export default function AdminPages() {
                                             </div>
                                             {/* Quick Actions on Hover */}
                                             <div className="flex items-center gap-3 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Link href={`/admin/pages/${page.id}`} className="text-primary hover:underline font-medium">Chỉnh sửa</Link>
-                                                <span className="text-slate-300">|</span>
-                                                <button onClick={() => handleDelete(page.id)} className="text-red-500 hover:underline font-medium">Xóa</button>
-                                                <span className="text-slate-300">|</span>
-                                                <Link href={`/${page.slug === 'home' ? '' : page.slug}`} target="_blank" className="text-slate-500 hover:underline font-medium">Xem trang</Link>
+                                                {statusFilter === 'trash' ? (
+                                                    <>
+                                                        <button onClick={() => handleRestore(page.id)} className="text-emerald-500 hover:underline font-medium">Khôi phục</button>
+                                                        <span className="text-slate-300">|</span>
+                                                        <button onClick={() => handleDelete(page.id, true)} className="text-red-600 hover:underline font-medium">Xóa vĩnh viễn</button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Link href={`/admin/pages/${page.id}`} className="text-primary hover:underline font-medium">Chỉnh sửa</Link>
+                                                        <span className="text-slate-300">|</span>
+                                                        <button onClick={() => handleDelete(page.id)} className="text-red-500 hover:underline font-medium">Xóa</button>
+                                                        <span className="text-slate-300">|</span>
+                                                        <Link href={`/${page.slug === 'home' ? '' : page.slug}`} target="_blank" className="text-slate-500 hover:underline font-medium">Xem trang</Link>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </td>

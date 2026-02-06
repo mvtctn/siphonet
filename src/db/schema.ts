@@ -7,7 +7,7 @@ export const categories: PgTableWithColumns<any> = pgTable('categories', {
     name: varchar('name', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 255 }).notNull().unique(),
     description: text('description'),
-    icon: varchar('icon', { length: 50 }),
+    type: varchar('type', { length: 50 }).default('product').notNull(), // product, post
     parentId: uuid('parent_id').references(() => categories.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -53,6 +53,7 @@ export const products = pgTable('products', {
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
 })
 
 // Projects Table
@@ -119,7 +120,8 @@ export const posts = pgTable('posts', {
     featuredImageUrl: varchar('featured_image_url', { length: 1000 }),
 
     // Category
-    category: varchar('category', { length: 100 }),
+    categoryId: uuid('category_id').references(() => categories.id),
+    category: varchar('category', { length: 100 }), // legacy string category
 
     // Tags as JSON array
     tags: jsonb('tags').$type<string[]>(),
@@ -135,6 +137,7 @@ export const posts = pgTable('posts', {
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
 })
 
 // Orders Table
@@ -193,6 +196,7 @@ export const pages = pgTable('pages', {
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
 })
 
 // Reviews Table
@@ -368,11 +372,19 @@ export const adminUsers = pgTable('admin_users', {
 // Relations
 export const categoriesRelations = relations(categories, ({ many, one }) => ({
     products: many(products),
+    posts: many(posts),
     parent: one(categories, {
         fields: [categories.parentId],
         references: [categories.id],
     }),
     children: many(categories),
+}))
+
+export const postsRelations = relations(posts, ({ one }) => ({
+    category: one(categories, {
+        fields: [posts.categoryId],
+        references: [categories.id],
+    }),
 }))
 
 export const productsRelations = relations(products, ({ one, many }) => ({

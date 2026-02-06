@@ -4,8 +4,10 @@ import { useState } from 'react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { Send, FileText, CheckCircle2, Clock, Shield, TrendingUp, Loader2 } from 'lucide-react'
+import { useSettings } from '@/components/providers/SettingsProvider'
 
 export default function QuotePage() {
+    const settings = useSettings()
     const [formData, setFormData] = useState({
         name: '',
         company: '',
@@ -149,9 +151,9 @@ export default function QuotePage() {
                             <div className="bg-gradient-to-br from-primary to-cyan-600 rounded-2xl shadow-lg p-6 text-white">
                                 <h3 className="font-bold text-lg mb-3">Liên hệ trực tiếp</h3>
                                 <div className="space-y-3 text-sm">
-                                    <p>📞 Hotline: <strong>024 3200 1234</strong></p>
-                                    <p>📧 Email: <strong>siphonetjsc@gmail.com</strong></p>
-                                    <p>⏰ Thứ 2 - Thứ 6: 8:00 - 17:30</p>
+                                    <p>📞 Hotline: <strong>{settings?.site_info?.phone || '024 3200 1234'}</strong></p>
+                                    <p>📧 Email: <strong>{settings?.site_info?.email || 'siphonetjsc@gmail.com'}</strong></p>
+                                    <p>⏰ {settings?.site_info?.working_hours || 'Thứ 2 - Thứ 6: 8:00 - 17:30'}</p>
                                 </div>
                             </div>
                         </div>

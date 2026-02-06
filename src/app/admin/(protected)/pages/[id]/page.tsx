@@ -6,10 +6,14 @@ import Link from 'next/link'
 import {
     ArrowLeft, Save, Globe, Eye, Settings, Layout, Loader2,
     CheckCircle2, Image as ImageIcon, ExternalLink, Hash,
-    Type, AlignLeft, List, Bold, Italic, Link as LinkIcon,
-    ChevronRight, Calendar, User, Info, Smartphone
+    Type, AlignLeft, AlignCenter, AlignRight, AlignJustify,
+    List, Bold, Italic, Underline, Strikethrough, Code, Quote,
+    Minus, Link as LinkIcon, Undo2, Redo2, Eraser,
+    ChevronRight, Calendar, User, Info, Smartphone, X
 } from 'lucide-react'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { MediaLibrary } from '@/components/admin/MediaLibrary'
+import { slugify } from '@/lib/utils'
 
 export default function PageEditor({ params }: { params: Promise<{ id: string }> }) {
     const { id: pageId } = use(params)
@@ -19,9 +23,11 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
 
     const [editorMode, setEditorMode] = useState<'html' | 'visual'>('html')
     const visualRef = useRef<HTMLDivElement>(null)
+    const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false)
 
     const [isLoading, setIsLoading] = useState(!isNew)
     const [isSaving, setIsSaving] = useState(false)
+    const [isShowLibraryModal, setIsShowLibraryModal] = useState(false)
     const [activeSidebarTab, setActiveSidebarTab] = useState<'settings' | 'seo' | 'images'>('settings')
 
     const [formData, setFormData] = useState({
@@ -106,15 +112,19 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
         if (editorMode === 'visual') {
             document.execCommand(command, false, value)
         } else {
-            // Mapping commands to HTML tags for HTML mode
             const tags: Record<string, [string, string]> = {
                 'bold': ['<strong>', '</strong>'],
                 'italic': ['<em>', '</em>'],
+                'underline': ['<u>', '</u>'],
+                'strikeThrough': ['<del>', '</del>'],
                 'formatBlock:h2': ['<h2>', '</h2>'],
                 'formatBlock:h3': ['<h3>', '</h3>'],
+                'formatBlock:h4': ['<h4>', '</h4>'],
+                'formatBlock:blockquote': ['<blockquote>', '</blockquote>'],
                 'formatBlock:p': ['<p>', '</p>'],
                 'insertUnorderedList': ['<ul><li>', '</li></ul>'],
                 'createLink': ['<a href="#">', '</a>'],
+                'insertHorizontalRule': ['<hr />', ''],
             }
             const [open, close] = tags[command] || tags[`${command}:${value}`] || ['', '']
             insertTag(open, close)
@@ -138,6 +148,23 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
                 contentRef.current.setSelectionRange(start + open.length, end + open.length)
             }
         }, 0)
+    }
+
+    const handleInsertMedia = (url: string) => {
+        const html = `<img src="${url}" alt="" class="max-w-full h-auto rounded-3xl shadow-xl my-10 mx-auto block" />\n`
+
+        if (editorMode === 'visual') {
+            if (visualRef.current) {
+                visualRef.current.focus()
+                document.execCommand('insertHTML', false, html)
+            }
+        } else {
+            if (contentRef.current) {
+                contentRef.current.focus()
+                insertTag(html, '')
+            }
+        }
+        setIsShowLibraryModal(false)
     }
 
     const toggleMode = (mode: 'html' | 'visual') => {
@@ -210,9 +237,16 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
                         <input
                             type="text"
                             value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            placeholder="Nhập tiêu đề trang hẫ dẫn..."
-                            className="w-full text-4xl font-extrabold text-slate-900 border-none focus:ring-0 placeholder:text-slate-200 p-0"
+                            onChange={(e) => {
+                                const newTitle = e.target.value
+                                const updates: any = { title: newTitle }
+                                if (!isSlugManuallyEdited) {
+                                    updates.slug = slugify(newTitle)
+                                }
+                                setFormData({ ...formData, ...updates })
+                            }}
+                            placeholder="Nhập tiêu đề trang hấp dẫn..."
+                            className="w-full text-4xl font-bold text-slate-900 border-none focus:ring-0 placeholder:text-slate-200 p-0"
                         />
 
                         {/* Visual Permalink Editor */}
@@ -223,46 +257,99 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
                             <input
                                 type="text"
                                 value={formData.slug}
-                                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                onChange={(e) => {
+                                    setIsSlugManuallyEdited(true)
+                                    setFormData({ ...formData, slug: e.target.value })
+                                }}
                                 className="bg-transparent border-none p-0 focus:ring-0 text-primary font-bold min-w-[50px] underline decoration-primary/30 underline-offset-4"
                                 placeholder="..."
                             />
-                            <button className="ml-auto text-xs text-primary font-bold hover:underline">Tự động tạo</button>
+                            <button
+                                onClick={() => {
+                                    setFormData({ ...formData, slug: slugify(formData.title) })
+                                    setIsSlugManuallyEdited(false)
+                                }}
+                                className="ml-auto text-xs text-primary font-bold hover:underline"
+                            >
+                                Tự động tạo
+                            </button>
                         </div>
                     </div>
 
                     {/* Content Editor Area */}
                     <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden min-h-[700px] flex flex-col">
                         {/* Editor Toolbar */}
-                        <div className="bg-slate-50/50 border-b border-slate-100 px-4 py-3 flex flex-wrap items-center gap-1.5">
-                            <button onClick={() => execCommand('formatBlock', 'h2')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Đầu đề 2"><Hash className="h-4 w-4" /></button>
-                            <button onClick={() => execCommand('formatBlock', 'h3')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Đầu đề 3"><Type className="h-4 w-4" /></button>
-                            <div className="w-px h-6 bg-slate-200 mx-1" />
-                            <button onClick={() => execCommand('formatBlock', 'p')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Đoạn văn"><AlignLeft className="h-4 w-4" /></button>
-                            <button onClick={() => execCommand('bold')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In đậm"><Bold className="h-4 w-4" /></button>
-                            <button onClick={() => execCommand('italic')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In nghiêng"><Italic className="h-4 w-4" /></button>
-                            <div className="w-px h-6 bg-slate-200 mx-1" />
-                            <button onClick={() => execCommand('insertUnorderedList')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Danh sách"><List className="h-4 w-4" /></button>
-                            <button onClick={() => execCommand('createLink', prompt('Nhập địa chỉ liên kết:') || '#')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Liên kết"><LinkIcon className="h-4 w-4" /></button>
+                        <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap items-center gap-1">
+                            {/* Group: History */}
+                            <div className="flex items-center gap-0.5 mr-2">
+                                <button onClick={() => execCommand('undo')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Hoàn tác (Ctrl+Z)"><Undo2 className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('redo')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Làm lại (Ctrl+Y)"><Redo2 className="h-4 w-4" /></button>
+                            </div>
+                            <div className="w-px h-6 bg-slate-300 mx-1" />
 
-                            <div className="ml-auto flex items-center gap-3">
-                                <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Chế độ:</span>
-                                <div className="flex bg-slate-200 p-1 rounded-lg">
-                                    <button
-                                        type="button"
-                                        onClick={() => toggleMode('html')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${editorMode === 'html' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                    >
-                                        HTML
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => toggleMode('visual')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${editorMode === 'visual' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                    >
-                                        Visual
-                                    </button>
-                                </div>
+                            {/* Group: Blocks */}
+                            <div className="flex items-center gap-0.5 mr-2">
+                                <button onClick={() => execCommand('formatBlock', 'h2')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 2"><Hash className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('formatBlock', 'h3')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 3"><Type className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('formatBlock', 'blockquote')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Trích dẫn"><Quote className="h-4 w-4" /></button>
+                            </div>
+                            <div className="w-px h-6 bg-slate-300 mx-1" />
+
+                            {/* Group: Inline Styling */}
+                            <div className="flex items-center gap-0.5 mr-2">
+                                <button onClick={() => execCommand('bold')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In đậm (Ctrl+B)"><Bold className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('italic')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In nghiêng (Ctrl+I)"><Italic className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('underline')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch chân (Ctrl+U)"><Underline className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('strikeThrough')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch ngang"><Strikethrough className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('formatBlock', 'code')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Mã code"><Code className="h-4 w-4" /></button>
+                            </div>
+                            <div className="w-px h-6 bg-slate-300 mx-1" />
+
+                            {/* Group: Alignment */}
+                            <div className="flex items-center gap-0.5 mr-2">
+                                <button onClick={() => execCommand('justifyLeft')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn trái"><AlignLeft className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('justifyCenter')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn giữa"><AlignCenter className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('justifyRight')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn phải"><AlignRight className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('justifyFull')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn đều"><AlignJustify className="h-4 w-4" /></button>
+                            </div>
+                            <div className="w-px h-6 bg-slate-300 mx-1" />
+
+                            {/* Group: Lists & Others */}
+                            <div className="flex items-center gap-0.5 mr-2">
+                                <button onClick={() => execCommand('insertUnorderedList')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Danh sách dấu chấm"><List className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('createLink', prompt('Nhập địa chỉ liên kết:') || '#')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Chèn liên kết"><LinkIcon className="h-4 w-4" /></button>
+                                <button onClick={() => execCommand('insertHorizontalRule')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Đường kẻ ngang"><Minus className="h-4 w-4" /></button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setIsShowLibraryModal(true);
+                                    }}
+                                    className="p-2 hover:bg-white rounded-lg text-emerald-600 transition-all hover:text-emerald-700 active:scale-90"
+                                    title="Chèn ảnh từ thư viện"
+                                >
+                                    <ImageIcon className="h-4 w-4" />
+                                </button>
+                            </div>
+                            <div className="w-px h-6 bg-slate-300 mx-1" />
+
+                            <button onClick={() => execCommand('removeFormat')} className="p-2 hover:bg-white rounded-lg text-red-500 transition-all hover:text-red-700 active:scale-90" title="Xóa định dạng"><Eraser className="h-4 w-4" /></button>
+
+                            <div className="ml-auto flex items-center gap-3 bg-white/50 p-1 rounded-xl border border-slate-200 shadow-sm">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleMode('html')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${editorMode === 'html' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+                                >
+                                    CODE
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => toggleMode('visual')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${editorMode === 'visual' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+                                >
+                                    VISUAL
+                                </button>
                             </div>
                         </div>
 
@@ -422,6 +509,29 @@ export default function PageEditor({ params }: { params: Promise<{ id: string }>
                     </div>
                 </aside>
             </main>
+
+            {/* Library Modal */}
+            {isShowLibraryModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-[40px] w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-white/20">
+                        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900">Thư viện Media</h2>
+                                <p className="text-sm text-slate-500 font-medium">Chọn một ảnh để chèn vào trang của bạn.</p>
+                            </div>
+                            <button
+                                onClick={() => setIsShowLibraryModal(false)}
+                                className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                            >
+                                <X size={28} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-hidden p-8">
+                            <MediaLibrary onSelect={handleInsertMedia} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Save, Loader2, Globe, Search, BarChart3, Share2 } from 'lucide-react'
+import { Save, Loader2, Globe, Search, BarChart3, Share2, Settings, Image as ImageIcon } from 'lucide-react'
+import { ImageUpload } from '@/components/admin/ImageUpload'
 
 interface SettingsData {
     site_info: {
@@ -10,6 +11,10 @@ interface SettingsData {
         email: string
         phone: string
         address: string
+        logo_url: string
+        favicon_url: string
+        working_hours: string
+        map_embed_url: string
     }
     seo: {
         meta_title: string
@@ -17,7 +22,7 @@ interface SettingsData {
         keywords: string
     }
     analytics: {
-        google_analytics_id: string
+        google_analytics_script: string
         google_console_id: string
         facebook_pixel: string
     }
@@ -25,6 +30,7 @@ interface SettingsData {
         facebook: string
         zalo: string
         youtube: string
+        linkedin: string
     }
     chat_bubble: {
         enabled: boolean
@@ -35,10 +41,20 @@ interface SettingsData {
 }
 
 const defaultSettings: SettingsData = {
-    site_info: { title: '', description: '', email: '', phone: '', address: '' },
+    site_info: {
+        title: '',
+        description: '',
+        email: '',
+        phone: '',
+        address: '',
+        logo_url: '',
+        favicon_url: '',
+        working_hours: 'Thứ 2 - Thứ 6: 8:00 - 17:30 | Thứ 7: 8:00 - 12:00',
+        map_embed_url: ''
+    },
     seo: { meta_title: '', meta_description: '', keywords: '' },
-    analytics: { google_analytics_id: '', google_console_id: '', facebook_pixel: '' },
-    social: { facebook: '', zalo: '', youtube: '' },
+    analytics: { google_analytics_script: '', google_console_id: '', facebook_pixel: '' },
+    social: { facebook: '', zalo: '', youtube: '', linkedin: '' },
     chat_bubble: { enabled: true, zalo: '', messenger: '', whatsapp: '' }
 }
 
@@ -46,7 +62,7 @@ export default function SettingsPage() {
     const [settings, setSettings] = useState<SettingsData>(defaultSettings)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [activeTab, setActiveTab] = useState<'general' | 'seo' | 'analytics' | 'social' | 'chat'>('general')
+    const [activeTab, setActiveTab] = useState<'general' | 'media' | 'seo' | 'analytics' | 'social' | 'chat'>('general')
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -54,8 +70,17 @@ export default function SettingsPage() {
                 const res = await fetch('/api/admin/settings')
                 const data = await res.json()
                 if (data.success && data.data) {
-                    // Merge with default to ensure structure
-                    setSettings({ ...defaultSettings, ...data.data })
+                    // Deep merge with default to ensure structure
+                    const mergedSettings = { ...defaultSettings }
+                    Object.keys(data.data).forEach(key => {
+                        if (mergedSettings[key as keyof SettingsData]) {
+                            mergedSettings[key as keyof SettingsData] = {
+                                ...mergedSettings[key as keyof SettingsData],
+                                ...data.data[key]
+                            } as any
+                        }
+                    })
+                    setSettings(mergedSettings)
                 }
             } catch (error) {
                 console.error('Failed to load settings', error)
@@ -97,120 +122,199 @@ export default function SettingsPage() {
         }))
     }
 
-    if (loading) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin" /></div>
+    if (loading) return (
+        <div className="p-20 flex flex-col items-center justify-center gap-4">
+            <Loader2 className="animate-spin text-primary h-12 w-12" />
+            <p className="text-slate-500 font-medium">Đang tải cấu hình...</p>
+        </div>
+    )
 
     return (
-        <div className="p-8 max-w-5xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Cấu hình Website</h1>
-                    <p className="text-slate-500">Quản lý thông tin chung, SEO và mã theo dõi</p>
+        <div className="p-6 max-w-6xl mx-auto bg-slate-50/50 min-h-screen">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+                        <Settings className="h-8 w-8 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Cấu hình hệ thống</h1>
+                        <p className="text-slate-500 font-medium">Tùy chỉnh thông tin website, nhận diện thương hiệu và SEO.</p>
+                    </div>
                 </div>
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-600 transition-all shadow-lg shadow-primary/20 font-medium"
+                    className="flex items-center justify-center gap-2 px-8 py-3.5 bg-primary text-white rounded-2xl hover:bg-primary-600 transition-all shadow-xl shadow-primary/20 font-bold active:scale-95 disabled:opacity-50"
                 >
                     {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                    Lưu cấu hình
+                    {saving ? 'Đang lưu...' : 'Lưu tất cả cấu hình'}
                 </button>
             </div>
 
             <div className="grid grid-cols-12 gap-8">
-                {/* Sidebar Menu */}
-                <div className="col-span-12 md:col-span-3">
-                    <nav className="space-y-1">
-                        <button
-                            onClick={() => setActiveTab('general')}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${activeTab === 'general' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'
-                                }`}
-                        >
-                            <Globe size={18} /> Thông tin chung
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('seo')}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${activeTab === 'seo' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'
-                                }`}
-                        >
-                            <Search size={18} /> Cấu hình SEO
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('analytics')}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${activeTab === 'analytics' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'
-                                }`}
-                        >
-                            <BarChart3 size={18} /> Mã theo dõi (Analytics)
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('social')}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${activeTab === 'social' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'
-                                }`}
-                        >
-                            <Share2 size={18} /> Mạng xã hội
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('chat')}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${activeTab === 'chat' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'
-                                }`}
-                        >
-                            <Share2 size={18} /> Bong bóng Chat
-                        </button>
-                    </nav>
+                {/* Sidebar Navigation */}
+                <div className="col-span-12 lg:col-span-3">
+                    <div className="bg-white p-2 rounded-3xl border border-slate-200 shadow-sm sticky top-24">
+                        <div className="space-y-1">
+                            {[
+                                { id: 'general', label: 'Thông tin chung', icon: Globe },
+                                { id: 'media', label: 'Logo & Hình ảnh', icon: ImageIcon },
+                                { id: 'seo', label: 'Tối ưu SEO', icon: Search },
+                                { id: 'analytics', label: 'Mã theo dõi', icon: BarChart3 },
+                                { id: 'social', label: 'Mạng xã hội', icon: Share2 },
+                                { id: 'chat', label: 'Bong bóng Chat', icon: Share2 },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id as any)}
+                                    className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm font-bold rounded-2xl transition-all ${activeTab === tab.id
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]'
+                                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                                        }`}
+                                >
+                                    <tab.icon size={18} />
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
-                {/* Content */}
-                <div className="col-span-12 md:col-span-9 space-y-6">
+                {/* Content Area */}
+                <div className="col-span-12 lg:col-span-9 space-y-6">
                     {/* General Settings */}
                     {activeTab === 'general' && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
-                            <h2 className="text-lg font-bold text-slate-800 mb-6 border-b pb-4">Thông tin website</h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tên Website (Title)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                        value={settings.site_info.title}
-                                        onChange={(e) => handleChange('site_info', 'title', e.target.value)}
-                                    />
+                        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
+                            <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-primary rounded-full" />
+                                Thông tin chung website
+                            </h2>
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">Tên Website / Thương hiệu</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
+                                            value={settings.site_info.title}
+                                            onChange={(e) => handleChange('site_info', 'title', e.target.value)}
+                                            placeholder="Siphonet"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">Hotline liên hệ</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
+                                            value={settings.site_info.phone}
+                                            onChange={(e) => handleChange('site_info', 'phone', e.target.value)}
+                                            placeholder="0913 381 683"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Mô tả ngắn</label>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-slate-700">Mô tả ngắn (Tagline)</label>
                                     <textarea
-                                        rows={3}
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                        rows={2}
+                                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
                                         value={settings.site_info.description}
                                         onChange={(e) => handleChange('site_info', 'description', e.target.value)}
+                                        placeholder="Thiết bị Cơ Điện & Xử Lý Nước"
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Email liên hệ</label>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">Email công ty</label>
                                         <input
                                             type="email"
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium font-mono"
                                             value={settings.site_info.email}
                                             onChange={(e) => handleChange('site_info', 'email', e.target.value)}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Hotline</label>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">Giờ làm việc</label>
                                         <input
                                             type="text"
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                            value={settings.site_info.phone}
-                                            onChange={(e) => handleChange('site_info', 'phone', e.target.value)}
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium font-mono text-xs"
+                                            value={settings.site_info.working_hours}
+                                            onChange={(e) => handleChange('site_info', 'working_hours', e.target.value)}
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Địa chỉ</label>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-slate-700">Địa chỉ văn phòng</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
                                         value={settings.site_info.address}
                                         onChange={(e) => handleChange('site_info', 'address', e.target.value)}
                                     />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-slate-700">Google Maps Embed URL</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium text-xs font-mono"
+                                        value={settings.site_info.map_embed_url}
+                                        onChange={(e) => handleChange('site_info', 'map_embed_url', e.target.value)}
+                                        placeholder="https://www.google.com/maps/embed?..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Media Settings */}
+                    {activeTab === 'media' && (
+                        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
+                            <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-primary rounded-full" />
+                                Nhận diện thương hiệu (Logo & Icon)
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Logo Chính</h3>
+                                        <p className="text-[10px] text-slate-400 font-bold italic">Khuyên dùng: PNG transparent (200x50px hoặc 4:1)</p>
+                                    </div>
+                                    <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center gap-6">
+                                        <div className="h-24 w-full bg-white rounded-2xl shadow-inner flex items-center justify-center p-4 border border-slate-100">
+                                            {settings.site_info.logo_url ? (
+                                                <img src={settings.site_info.logo_url} className="h-full w-auto object-contain" alt="Logo preview" />
+                                            ) : (
+                                                <ImageIcon className="text-slate-200 h-12 w-12" />
+                                            )}
+                                        </div>
+                                        <ImageUpload
+                                            value={settings.site_info.logo_url ? [settings.site_info.logo_url] : []}
+                                            onChange={(urls) => handleChange('site_info', 'logo_url', urls[0] || '')}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Favicon</h3>
+                                        <p className="text-[10px] text-slate-400 font-bold italic">Khuyên dùng: PNG/ICO (32x32px)</p>
+                                    </div>
+                                    <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center gap-6">
+                                        <div className="h-24 w-24 bg-white rounded-2xl shadow-inner flex items-center justify-center p-6 border border-slate-100">
+                                            {settings.site_info.favicon_url ? (
+                                                <img src={settings.site_info.favicon_url} className="h-full w-full object-contain" alt="Favicon preview" />
+                                            ) : (
+                                                <ImageIcon className="text-slate-200 h-8 w-8" />
+                                            )}
+                                        </div>
+                                        <ImageUpload
+                                            value={settings.site_info.favicon_url ? [settings.site_info.favicon_url] : []}
+                                            onChange={(urls) => handleChange('site_info', 'favicon_url', urls[0] || '')}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -218,37 +322,44 @@ export default function SettingsPage() {
 
                     {/* SEO Settings */}
                     {activeTab === 'seo' && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
-                            <h2 className="text-lg font-bold text-slate-800 mb-6 border-b pb-4">Cấu hình SEO mặc định</h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Meta Title mặc định</label>
+                        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
+                            <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-primary rounded-full" />
+                                Tối ưu công cụ tìm kiếm (SEO)
+                            </h2>
+                            <div className="space-y-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-slate-700">Meta Title mặc định</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
                                         value={settings.seo.meta_title}
                                         onChange={(e) => handleChange('seo', 'meta_title', e.target.value)}
                                         placeholder="Siphonet - Thiết bị Cơ Điện & Xử Lý Nước"
                                     />
+                                    <p className="text-[10px] text-slate-400 font-medium">Tiêu đề xuất hiện trên tab trình duyệt và kết quả tìm kiếm (Dưới 60 ký tự).</p>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Meta Description mặc định</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-slate-700">Meta Description mặc định</label>
                                     <textarea
-                                        rows={3}
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                        rows={4}
+                                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
                                         value={settings.seo.meta_description}
                                         onChange={(e) => handleChange('seo', 'meta_description', e.target.value)}
+                                        placeholder="Mô tả về website của bạn..."
                                     />
+                                    <p className="text-[10px] text-slate-400 font-medium">Đoạn tóm tắt nội dung website (Dưới 160 ký tự).</p>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Keywords (từ khóa)</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-slate-700">Keywords (Từ khóa)</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium text-xs font-mono"
                                         value={settings.seo.keywords}
                                         onChange={(e) => handleChange('seo', 'keywords', e.target.value)}
-                                        placeholder="bơm nước, xử lý nước, cơ điện, siphonet..."
+                                        placeholder="bơm nước, xử lý nước, siphonet, m&e..."
                                     />
+                                    <p className="text-[10px] text-slate-400 font-medium">Các từ khóa chính cách nhau bởi dấu phẩy (,).</p>
                                 </div>
                             </div>
                         </div>
@@ -256,37 +367,53 @@ export default function SettingsPage() {
 
                     {/* Analytics Settings */}
                     {activeTab === 'analytics' && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
-                            <h2 className="text-lg font-bold text-slate-800 mb-6 border-b pb-4">Google Analytics & Console</h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Google Analytics ID (G-XXXXXXX)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
-                                        value={settings.analytics.google_analytics_id}
-                                        onChange={(e) => handleChange('analytics', 'google_analytics_id', e.target.value)}
-                                        placeholder="G-ABC123456"
-                                    />
-                                    <p className="text-xs text-slate-500 mt-1">Mã đo lường GA4</p>
+                        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
+                            <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-primary rounded-full" />
+                                Tracking & Analytics
+                            </h2>
+                            <div className="space-y-6">
+                                <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4">
+                                    <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                                        <Globe size={20} />
+                                    </div>
+                                    <p className="text-sm text-blue-700 font-medium leading-relaxed">
+                                        Các đoạn mã này sẽ được chèn tự động vào thẻ <strong>&lt;head&gt;</strong> của website để theo dõi lưu lượng và chuyển đổi.
+                                    </p>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Google Search Console Verification Code</label>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5 col-span-full">
+                                        <label className="text-sm font-bold text-slate-700">Mã Google Analytics (Toàn bộ code)</label>
+                                        <textarea
+                                            rows={8}
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium text-xs font-mono"
+                                            value={settings.analytics.google_analytics_script}
+                                            onChange={(e) => handleChange('analytics', 'google_analytics_script', e.target.value)}
+                                            placeholder="<!-- Google tag (gtag.js) -->\n<script async src='...'></script>\n<script>\n  ...\n</script>"
+                                        />
+                                        <p className="text-[10px] text-slate-400 font-medium italic">Sao chép và dán toàn bộ đoạn mã Google cung cấp vào đây.</p>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">Facebook Pixel ID</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-bold text-xs font-mono"
+                                            value={settings.analytics.facebook_pixel}
+                                            onChange={(e) => handleChange('analytics', 'facebook_pixel', e.target.value)}
+                                            placeholder="123456789012345"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-slate-700">Google Search Console Identification Code</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
+                                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium text-xs font-mono"
                                         value={settings.analytics.google_console_id}
                                         onChange={(e) => handleChange('analytics', 'google_console_id', e.target.value)}
-                                    />
-                                    <p className="text-xs text-slate-500 mt-1">Thẻ meta name="google-site-verification"</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Facebook Pixel ID</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
-                                        value={settings.analytics.facebook_pixel}
-                                        onChange={(e) => handleChange('analytics', 'facebook_pixel', e.target.value)}
+                                        placeholder='meta name="google-site-verification" content="..."'
                                     />
                                 </div>
                             </div>
@@ -295,91 +422,111 @@ export default function SettingsPage() {
 
                     {/* Social Settings */}
                     {activeTab === 'social' && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
-                            <h2 className="text-lg font-bold text-slate-800 mb-6 border-b pb-4">Liên kết mạng xã hội</h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Facebook Fanpage URL</label>
+                        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
+                            <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-primary rounded-full" />
+                                Mạng xã hội & Cộng đồng
+                            </h2>
+                            <div className="space-y-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-slate-700">Facebook Page URL</label>
                                     <input
                                         type="url"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
                                         value={settings.social.facebook}
                                         onChange={(e) => handleChange('social', 'facebook', e.target.value)}
                                         placeholder="https://facebook.com/siphonet"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Zalo Pay/OA Link</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                        value={settings.social.zalo}
-                                        onChange={(e) => handleChange('social', 'zalo', e.target.value)}
-                                        placeholder="https://zalo.me/..."
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Youtube Channel</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-slate-700">YouTube Channel URL</label>
                                     <input
                                         type="url"
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
                                         value={settings.social.youtube}
                                         onChange={(e) => handleChange('social', 'youtube', e.target.value)}
                                     />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">Zalo Official Account Link</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
+                                            value={settings.social.zalo}
+                                            onChange={(e) => handleChange('social', 'zalo', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">LinkedIn Company URL</label>
+                                        <input
+                                            type="url"
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium"
+                                            value={settings.social.linkedin}
+                                            onChange={(e) => handleChange('social', 'linkedin', e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Chat Bubble Settings */}
+                    {/* Chat Settings */}
                     {activeTab === 'chat' && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
-                            <h2 className="text-lg font-bold text-slate-800 mb-6 border-b pb-4">Cấu hình Bong bóng Chat</h2>
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                                    <div>
-                                        <h3 className="font-bold text-slate-900">Hiển thị Bong bóng Chat</h3>
-                                        <p className="text-xs text-slate-500">Bật/tắt cụm nút liên hệ nhanh ở góc màn hình</p>
+                        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200 animate-in fade-in slide-in-from-right-4">
+                            <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-primary rounded-full" />
+                                Nút liên hệ nhanh (Chat Bubble)
+                            </h2>
+                            <div className="space-y-8">
+                                <div className="p-6 bg-primary/5 border border-primary/10 rounded-3xl flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-2 bg-white rounded-xl shadow-sm text-primary">
+                                            <Share2 size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-slate-900">Bật cụm nút liên hệ</h3>
+                                            <p className="text-xs text-slate-500 font-medium">Kích hoạt bong bóng chat ở góc dưới màn hình website.</p>
+                                        </div>
                                     </div>
                                     <button
                                         onClick={() => handleChange('chat_bubble', 'enabled', !settings.chat_bubble.enabled)}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${settings.chat_bubble.enabled ? 'bg-primary' : 'bg-slate-300'}`}
+                                        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all focus:outline-none ${settings.chat_bubble.enabled ? 'bg-primary shadow-lg shadow-primary/20' : 'bg-slate-300 shadow-inner'}`}
                                     >
-                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.chat_bubble.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${settings.chat_bubble.enabled ? 'translate-x-[1.65rem]' : 'translate-x-1'}`} />
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Link Zalo (zalo.me/...)</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">Zalo URL</label>
                                         <input
                                             type="text"
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all outline-none font-medium font-mono text-xs"
                                             value={settings.chat_bubble.zalo}
                                             onChange={(e) => handleChange('chat_bubble', 'zalo', e.target.value)}
                                             placeholder="https://zalo.me/0913381683"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Link Messenger (m.me/...)</label>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">Messenger Link</label>
                                         <input
                                             type="text"
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all outline-none font-medium font-mono text-xs"
                                             value={settings.chat_bubble.messenger}
                                             onChange={(e) => handleChange('chat_bubble', 'messenger', e.target.value)}
-                                            placeholder="https://m.me/siphonetjsc"
+                                            placeholder="https://m.me/siphonet"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Số WhatsApp</label>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-bold text-slate-700">WhatsApp Number</label>
                                         <input
                                             type="text"
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all outline-none font-medium font-mono text-xs"
                                             value={settings.chat_bubble.whatsapp}
                                             onChange={(e) => handleChange('chat_bubble', 'whatsapp', e.target.value)}
                                             placeholder="84913381683"
                                         />
-                                        <p className="text-[10px] text-slate-500 mt-1">Ghi mã quốc gia trước (ví dụ: 84913...)</p>
                                     </div>
                                 </div>
                             </div>

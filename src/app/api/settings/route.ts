@@ -20,6 +20,9 @@ export async function GET() {
         // Only expose non-sensitive settings
         const publicSettings = {
             site_info: settingsMap.site_info || {},
+            social: settingsMap.social || {},
+            seo: settingsMap.seo || {},
+            analytics: settingsMap.analytics || {},
             chat_bubble: settingsMap.chat_bubble || {
                 enabled: true,
                 zalo: 'https://zalo.me/0913381683',

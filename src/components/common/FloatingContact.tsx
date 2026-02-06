@@ -1,32 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MessageCircle, X } from 'lucide-react'
 import { ZaloIcon, MessengerIcon, WhatsAppIcon } from './BrandIcons'
+import { useSettings } from '@/components/providers/SettingsProvider'
 
 export function FloatingContact() {
     const [isOpen, setIsOpen] = useState(false)
-    const [config, setConfig] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
+    const settings = useSettings()
+    const config = settings?.chat_bubble
 
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const res = await fetch('/api/settings')
-                const data = await res.json()
-                if (data.success && data.data?.chat_bubble) {
-                    setConfig(data.data.chat_bubble)
-                }
-            } catch (error) {
-                console.error('Failed to load chat bubble settings', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchSettings()
-    }, [])
-
-    if (loading || !config || config.enabled === false || config.enabled === 'false') return null
+    if (!config || config.enabled === false) return null
 
     const contacts = [
         {

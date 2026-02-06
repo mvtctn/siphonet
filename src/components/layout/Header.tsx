@@ -8,10 +8,17 @@ import { Phone, Mail, Menu, ChevronDown, ChevronRight, Zap, Droplet, Waves, X, S
 import { mockCategories } from '@/lib/mock-data'
 
 import { useCartStore } from '@/store/useCartStore'
+import { useSettings } from '@/components/providers/SettingsProvider'
 
 export function Header() {
     const { getTotalItems } = useCartStore()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const settings = useSettings()
+    const siteInfo = settings?.site_info
+
+    const siteTitle = siteInfo?.title || 'SIPHONET'
+    const logoUrl = siteInfo?.logo_url || '/logo.png'
+
     const [headerMenu, setHeaderMenu] = useState<any>(null)
     const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -59,13 +66,13 @@ export function Header() {
                     <div className="container mx-auto px-4 py-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-4">
-                                <a href="tel:0913381683" className="flex items-center gap-2 hover:text-accent transition-colors">
+                                <a href={`tel:${siteInfo?.phone || '0913381683'}`} className="flex items-center gap-2 hover:text-accent transition-colors">
                                     <Phone className="h-4 w-4" />
-                                    <span>0913 381 683</span>
+                                    <span>{siteInfo?.phone || '0913 381 683'}</span>
                                 </a>
-                                <a href="mailto:siphonetjsc@gmail.com" className="flex items-center gap-2 hover:text-accent transition-colors">
+                                <a href={`mailto:${siteInfo?.email || 'siphonetjsc@gmail.com'}`} className="flex items-center gap-2 hover:text-accent transition-colors">
                                     <Mail className="h-4 w-4" />
-                                    <span>siphonetjsc@gmail.com</span>
+                                    <span>{siteInfo?.email || 'siphonetjsc@gmail.com'}</span>
                                 </a>
                             </div>
                             <div className="text-xs">
@@ -80,8 +87,8 @@ export function Header() {
                     <div className="flex h-20 items-center justify-between">
                         <Link href="/" className="flex items-center">
                             <Image
-                                src="/logo.png"
-                                alt="Siphonet Logo"
+                                src={logoUrl}
+                                alt={`${siteTitle} Logo`}
                                 width={208}
                                 height={52}
                                 priority

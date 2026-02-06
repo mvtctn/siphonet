@@ -1,8 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Save, Image as ImageIcon, ChevronLeft, Calendar, Eye, Trash2, Plus, X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import {
+    Save, Image as ImageIcon, ChevronLeft, Calendar, Eye, Trash2, Plus, X,
+    Undo2, Redo2, Type, Hash, Quote, Bold, Italic, Underline, Strikethrough,
+    Code, AlignLeft, AlignCenter, AlignRight, AlignJustify, List, Link as LinkIcon,
+    Minus, Eraser
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { db } from '@/db'
+import { MediaLibrary } from './MediaLibrary'
 import Link from 'next/link'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 
@@ -63,10 +70,16 @@ const defaultProduct: Product = {
 export function ProductEditor({ initialData, categories }: ProductEditorProps) {
     const router = useRouter()
     const [product, setProduct] = useState<Product>(initialData || defaultProduct)
-    const [submitting, setSubmitting] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [isShowLibraryModal, setIsShowLibraryModal] = useState(false)
+    const [selectedTab, setSelectedTab] = useState<'info' | 'specs' | 'seo'>('info')
     const [newCatName, setNewCatName] = useState('')
     const [localCategories, setLocalCategories] = useState(categories)
     const [activeDataTab, setActiveDataTab] = useState<'general' | 'inventory' | 'shipping' | 'attributes' | 'advanced'>('general')
+
+    const [editorMode, setEditorMode] = useState<'html' | 'visual'>('visual')
+    const visualRef = useRef<HTMLDivElement>(null)
+    const contentRef = useRef<HTMLTextAreaElement>(null)
 
     // Quick add category
     const handleAddCategory = async () => {
@@ -87,18 +100,29 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
     }
 
     const handleSubmit = async () => {
-        setSubmitting(true)
+        setIsSaving(true)
+
+        // Sync visual content before saving
+        const finalDescription = editorMode === 'visual' && visualRef.current
+            ? visualRef.current.innerHTML
+            : product.description
+
+        const isNew = !product.id || product.id === 'new'
+
+        const productToSave = {
+            ...product,
+            description: finalDescription,
+            // Remove old_price if not in DB to avoid errors, or handle specifically
+            // old_price: undefined 
+        }
+
         try {
-            const isUpdate = !!product.id
-            const url = '/api/admin/products'
-            const method = isUpdate ? 'PUT' : 'POST'
-
-            const res = await fetch(url, {
-                method,
+            // Use base products API for both, ID should be in body for PUT
+            const res = await fetch('/api/admin/products', {
+                method: isNew ? 'POST' : 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(product)
+                body: JSON.stringify(productToSave)
             })
-
             const data = await res.json()
             if (data.success) {
                 router.push('/admin/products')
@@ -107,9 +131,10 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
                 alert('Lỗi: ' + data.error)
             }
         } catch (error) {
+            console.error('Save error:', error)
             alert('Có lỗi xảy ra')
         } finally {
-            setSubmitting(false)
+            setIsSaving(false)
         }
     }
 
@@ -138,20 +163,142 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
         setProduct({ ...product, technical_specifications: newSpecs })
     }
 
-    // Fake Editor Toolbar
+    const execCommand = (command: string, value: string = '') => {
+        if (editorMode === 'visual') {
+            document.execCommand(command, false, value)
+        } else {
+            const tags: Record<string, [string, string]> = {
+                'bold': ['<strong>', '</strong>'],
+                'italic': ['<em>', '</em>'],
+                'underline': ['<u>', '</u>'],
+                'strikeThrough': ['<del>', '</del>'],
+                'formatBlock:h2': ['<h2>', '</h2>'],
+                'formatBlock:h3': ['<h3>', '</h3>'],
+                'formatBlock:h4': ['<h4>', '</h4>'],
+                'formatBlock:blockquote': ['<blockquote>', '</blockquote>'],
+                'formatBlock:p': ['<p>', '</p>'],
+                'insertUnorderedList': ['<ul><li>', '</li></ul>'],
+                'createLink': ['<a href="#">', '</a>'],
+                'insertHorizontalRule': ['<hr />', ''],
+            }
+            const [open, close] = tags[command] || tags[`${command}:${value}`] || ['', '']
+            insertTag(open, close)
+        }
+    }
+
+    const insertTag = (open: string, close: string) => {
+        if (!contentRef.current) return
+        const start = contentRef.current.selectionStart
+        const end = contentRef.current.selectionEnd
+        const text = contentRef.current.value
+        const selectedText = text.substring(start, end)
+        const newText = text.substring(0, start) + open + selectedText + close + text.substring(end)
+
+        setProduct({ ...product, description: newText })
+        setTimeout(() => {
+            if (contentRef.current) {
+                contentRef.current.focus()
+                contentRef.current.setSelectionRange(start + open.length, end + open.length)
+            }
+        }, 0)
+    }
+
+    const handleInsertMedia = (url: string) => {
+        const html = `<img src="${url}" alt="" class="max-w-full h-auto rounded-3xl shadow-xl my-10 mx-auto block" />\n`
+
+        if (editorMode === 'visual') {
+            if (visualRef.current) {
+                visualRef.current.focus()
+                document.execCommand('insertHTML', false, html)
+            }
+        } else {
+            if (contentRef.current) {
+                contentRef.current.focus()
+                insertTag(html, '')
+            }
+        }
+        setIsShowLibraryModal(false)
+    }
+
+    const toggleMode = (mode: 'html' | 'visual') => {
+        if (mode === editorMode) return
+        if (mode === 'html' && visualRef.current) {
+            setProduct({ ...product, description: visualRef.current.innerHTML })
+        }
+        setEditorMode(mode)
+    }
+
     const Toolbar = () => (
-        <div className="flex items-center gap-1 p-2 border-b border-slate-200 bg-slate-50 rounded-t-lg">
-            <button className="p-1 px-2 hover:bg-slate-200 rounded font-bold text-slate-600 text-sm">B</button>
-            <button className="p-1 px-2 hover:bg-slate-200 rounded italic text-slate-600 text-sm">I</button>
-            <button className="p-1 px-2 hover:bg-slate-200 rounded underline text-slate-600 text-sm">U</button>
-            <div className="h-4 w-px bg-slate-300 mx-1"></div>
-            <button className="p-1 px-2 hover:bg-slate-200 rounded text-slate-600 text-sm">Align Left</button>
-            <button className="p-1 px-2 hover:bg-slate-200 rounded text-slate-600 text-sm">Center</button>
-            <div className="h-4 w-px bg-slate-300 mx-1"></div>
-            <button className="p-1 px-2 hover:bg-slate-200 rounded text-slate-600 text-sm flex items-center gap-1">Link</button>
-            <div className="flex-1"></div>
-            <button className="p-1 px-2 hover:bg-slate-200 rounded text-slate-600 text-xs bg-white border shadow-sm">Visual</button>
-            <button className="p-1 px-2 hover:bg-slate-200 rounded text-slate-600 text-xs">Text</button>
+        <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap items-center gap-1">
+            {/* Group: History */}
+            <div className="flex items-center gap-0.5 mr-2">
+                <button type="button" onClick={() => execCommand('undo')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Hoàn tác"><Undo2 className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('redo')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Làm lại"><Redo2 className="h-4 w-4" /></button>
+            </div>
+            <div className="w-px h-6 bg-slate-300 mx-1" />
+
+            {/* Group: Blocks */}
+            <div className="flex items-center gap-0.5 mr-2">
+                <button type="button" onClick={() => execCommand('formatBlock', 'h2')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 2"><Hash className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('formatBlock', 'h3')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Tiêu đề 3"><Type className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('formatBlock', 'blockquote')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Trích dẫn"><Quote className="h-4 w-4" /></button>
+            </div>
+            <div className="w-px h-6 bg-slate-300 mx-1" />
+
+            {/* Group: Inline Styling */}
+            <div className="flex items-center gap-0.5 mr-2">
+                <button type="button" onClick={() => execCommand('bold')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In đậm"><Bold className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('italic')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="In nghiêng"><Italic className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('underline')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch chân"><Underline className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('strikeThrough')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Gạch ngang"><Strikethrough className="h-4 w-4" /></button>
+            </div>
+            <div className="w-px h-6 bg-slate-300 mx-1" />
+
+            {/* Group: Alignment */}
+            <div className="flex items-center gap-0.5 mr-2">
+                <button type="button" onClick={() => execCommand('justifyLeft')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn trái"><AlignLeft className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('justifyCenter')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn giữa"><AlignCenter className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('justifyRight')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Căn phải"><AlignRight className="h-4 w-4" /></button>
+            </div>
+            <div className="w-px h-6 bg-slate-300 mx-1" />
+
+            {/* Group: Lists & Media */}
+            <div className="flex items-center gap-0.5 mr-2">
+                <button type="button" onClick={() => execCommand('insertUnorderedList')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Danh sách"><List className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('createLink', prompt('Nhập địa chỉ liên kết:') || '#')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Liên kết"><LinkIcon className="h-4 w-4" /></button>
+                <button type="button" onClick={() => execCommand('insertHorizontalRule')} className="p-2 hover:bg-white rounded-lg text-slate-600 transition-all hover:text-primary active:scale-90" title="Đường kẻ ngang"><Minus className="h-4 w-4" /></button>
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        setIsShowLibraryModal(true);
+                    }}
+                    className="p-2 hover:bg-white rounded-lg text-emerald-600 transition-all hover:text-emerald-700 active:scale-90"
+                    title="Thư viện ảnh"
+                >
+                    <ImageIcon className="h-4 w-4" />
+                </button>
+            </div>
+            <div className="w-px h-6 bg-slate-300 mx-1" />
+
+            <button type="button" onClick={() => execCommand('removeFormat')} className="p-2 hover:bg-white rounded-lg text-red-500 transition-all hover:text-red-700 active:scale-90" title="Xóa định dạng"><Eraser className="h-4 w-4" /></button>
+
+            <div className="ml-auto flex items-center gap-3 bg-white/50 p-1 rounded-xl border border-slate-200 shadow-sm text-[10px] font-bold">
+                <button
+                    type="button"
+                    onClick={() => toggleMode('html')}
+                    className={`px-3 py-1 rounded-lg transition-all ${editorMode === 'html' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+                >
+                    CODE
+                </button>
+                <button
+                    type="button"
+                    onClick={() => toggleMode('visual')}
+                    className={`px-3 py-1 rounded-lg transition-all ${editorMode === 'visual' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+                >
+                    VISUAL
+                </button>
+            </div>
         </div>
     )
 
@@ -194,14 +341,25 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200">
                         <div className="p-4 border-b border-slate-100 font-semibold bg-slate-50/50">Mô tả chi tiết</div>
                         <div className="p-4">
-                            <div className="border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+                            <div className="border border-slate-200 rounded-3xl overflow-hidden bg-white shadow-sm min-h-[500px] flex flex-col">
                                 <Toolbar />
-                                <textarea
-                                    rows={12}
-                                    className="w-full p-4 focus:outline-none min-h-[300px]"
-                                    value={product.description}
-                                    onChange={(e) => setProduct({ ...product, description: e.target.value })}
-                                ></textarea>
+                                {editorMode === 'html' ? (
+                                    <textarea
+                                        ref={contentRef}
+                                        value={product.description}
+                                        onChange={(e) => setProduct({ ...product, description: e.target.value })}
+                                        className="w-full flex-1 p-8 text-lg text-slate-700 font-serif leading-relaxed focus:ring-0 border-none resize-none placeholder:text-slate-200 min-h-[400px]"
+                                        placeholder="Nhập mô tả sản phẩm ở đây..."
+                                    />
+                                ) : (
+                                    <div
+                                        ref={visualRef}
+                                        contentEditable
+                                        dangerouslySetInnerHTML={{ __html: product.description || '' }}
+                                        className="w-full flex-1 p-8 text-lg text-slate-700 font-serif leading-relaxed focus:outline-none min-h-[400px] prose max-w-none"
+                                        onBlur={(e) => setProduct({ ...product, description: e.currentTarget.innerHTML })}
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>
@@ -374,10 +532,10 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
                             <button className="text-red-500 hover:text-red-700 text-sm underline">Bỏ vào thùng rác</button>
                             <button
                                 onClick={handleSubmit}
-                                disabled={submitting}
+                                disabled={isSaving}
                                 className="bg-primary text-white px-4 py-2 rounded shadow-sm hover:bg-primary-600 font-medium transition-transform active:scale-95"
                             >
-                                {submitting ? 'Đang lưu...' : (product.id ? 'Cập nhật' : 'Đăng bài viết')}
+                                {isSaving ? 'Đang lưu...' : (product.id ? 'Cập nhật' : 'Đăng bài viết')}
                             </button>
                         </div>
                     </div>
@@ -487,6 +645,29 @@ export function ProductEditor({ initialData, categories }: ProductEditorProps) {
 
                 </div>
             </div>
+
+            {/* Library Modal */}
+            {isShowLibraryModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-[40px] w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-white/20">
+                        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900">Thư viện Media</h2>
+                                <p className="text-sm text-slate-500 font-medium">Chọn một ảnh để chèn vào mô tả sản phẩm.</p>
+                            </div>
+                            <button
+                                onClick={() => setIsShowLibraryModal(false)}
+                                className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                            >
+                                <X size={28} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-hidden p-8">
+                            <MediaLibrary onSelect={handleInsertMedia} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

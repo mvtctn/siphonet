@@ -12,7 +12,10 @@ graph TD
     Home --> Blog["📰 Tin tức (/tin-tuc)"]
     Home --> Contact["📞 Liên hệ (/lien-he)"]
     
-    Products --> ProductDetail["📄 Chi tiết sản phẩm (/[slug])"]
+    Products --> ProductCategory["🏷️ Danh mục (/san-pham/danh-muc/[slug])"]
+    Products --> ProductDetail["📄 Chi tiết sản phẩm (/san-pham/[slug])"]
+    ProductCategory --> ProductDetail
+    
     Projects --> ProjectDetail["📄 Chi tiết dự án (/[slug])"]
     Blog --> BlogDetail["📄 Chi tiết bài viết (/[slug])"]
     

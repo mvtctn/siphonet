@@ -11,13 +11,23 @@ export async function GET(request: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     try {
-        const { data: products, error } = await supabaseAdmin
+        const { searchParams } = new URL(request.url)
+        const isTrash = searchParams.get('trash') === 'true'
+
+        let query = supabaseAdmin
             .from('products')
             .select(`
                 *,
                 categories (id, name)
             `)
-            .order('created_at', { ascending: false })
+
+        if (isTrash) {
+            query = query.not('deleted_at', 'is', null)
+        } else {
+            query = query.is('deleted_at', null)
+        }
+
+        const { data: products, error } = await query.order('created_at', { ascending: false })
 
         if (error) throw error
 
@@ -26,6 +36,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 })
     }
 }
+
+// ... POST and PUT remain largely same, but should probably ensure deleted_at is null if creating or updating? 
+// Actually, soft-delete is managed via DELETE and RESTORE.
 
 export async function POST(request: NextRequest) {
     const session = await getSession()
@@ -47,16 +60,18 @@ export async function POST(request: NextRequest) {
             .replace(/-+/g, "-")
             .replace(/^-|-$/g, "");
 
-        const { old_price, seo_metadata, ...postData } = body
+        const { old_price, seo_metadata, categoryId, category_id, ...postData } = body
 
         // Map SEO metadata if available
         const finalData = {
             ...postData,
+            category_id: categoryId || category_id,
             meta_title: seo_metadata?.title || null,
             meta_description: seo_metadata?.description || null,
             keywords: seo_metadata?.keywords || null,
             slug,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            deleted_at: null // Ensure not deleted
         }
 
         const { data, error } = await supabaseAdmin
@@ -79,18 +94,26 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { id, old_price, seo_metadata, ...updates } = body
+        const { id, old_price, seo_metadata, categoryId, category_id, restore, ...updates } = body
+
+        if (!id) return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
 
         // Map SEO metadata if available
-        const finalUpdates = {
+        const finalUpdates: any = {
             ...updates,
-            meta_title: seo_metadata?.title || undefined,
-            meta_description: seo_metadata?.description || undefined,
-            keywords: seo_metadata?.keywords || undefined,
+            category_id: categoryId || category_id,
             updated_at: new Date().toISOString()
         }
 
-        if (!id) return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
+        if (seo_metadata) {
+            finalUpdates.meta_title = seo_metadata.title
+            finalUpdates.meta_description = seo_metadata.description
+            finalUpdates.keywords = seo_metadata.keywords
+        }
+
+        if (restore) {
+            finalUpdates.deleted_at = null
+        }
 
         const { data, error } = await supabaseAdmin
             .from('products')
@@ -113,16 +136,24 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const permanent = searchParams.get('permanent') === 'true'
 
     if (!id) return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
 
     try {
-        const { error } = await supabaseAdmin
-            .from('products')
-            .delete()
-            .eq('id', id)
-
-        if (error) throw error
+        if (permanent) {
+            const { error } = await supabaseAdmin
+                .from('products')
+                .delete()
+                .eq('id', id)
+            if (error) throw error
+        } else {
+            const { error } = await supabaseAdmin
+                .from('products')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', id)
+            if (error) throw error
+        }
 
         return NextResponse.json({ success: true })
     } catch (error: any) {

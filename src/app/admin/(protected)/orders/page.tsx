@@ -126,7 +126,7 @@ export default function OrdersPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Quản lý Đơn hàng</h1>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Quản lý Đơn hàng</h1>
                     <p className="text-slate-500 mt-1">Theo dõi và xử lý đơn đặt hàng từ khách hàng.</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export default function OrdersPage() {
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Tuần này</span>
                         </div>
-                        <div className="text-2xl font-black text-slate-900">{stat.value}</div>
+                        <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
                         <div className="text-xs font-medium text-slate-500 mt-1">{stat.label}</div>
                     </div>
                 ))}
@@ -174,8 +174,8 @@ export default function OrdersPage() {
                                     key={status}
                                     onClick={() => setStatusFilter(status)}
                                     className={`px-4 py-2 text-xs font-bold rounded-lg transition-all capitalize ${statusFilter === status
-                                            ? 'bg-white text-slate-900 shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-700'
+                                        ? 'bg-white text-slate-900 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700'
                                         }`}
                                 >
                                     {status === 'all' ? 'Tất cả' : status}
@@ -223,7 +223,7 @@ export default function OrdersPage() {
                                             {getPaymentBadge(order.paymentStatus)}
                                         </td>
                                         <td className="px-4 py-5">
-                                            <span className="font-black text-slate-900 text-sm">
+                                            <span className="font-bold text-slate-900 text-sm">
                                                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(order.totalAmount))}
                                             </span>
                                         </td>

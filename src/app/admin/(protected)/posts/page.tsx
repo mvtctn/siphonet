@@ -24,6 +24,9 @@ interface Post {
     created_at: string
     published_date?: string
     category?: string
+    categories?: {
+        name: string
+    }
     author?: string
     tags?: string[]
     seo_score?: number
@@ -51,12 +54,14 @@ export default function AdminPostsPage() {
     const fetchPosts = async () => {
         setLoading(true)
         try {
-            const res = await fetch('/api/admin/posts')
+            const url = filterStatus === 'trash' ? '/api/admin/posts?trash=true' : '/api/admin/posts'
+            const res = await fetch(url)
             const data = await res.json()
             if (data.success) {
                 const mappedPosts = data.data.map((p: any) => ({
                     ...p,
                     status: p.status || 'draft',
+                    category: p.categories?.name || p.category || 'Chưa phân loại',
                     author: p.author || 'Admin',
                     image: p.featured_image_url || p.image || '',
                     seo_score: Math.floor(Math.random() * 40) + 60
@@ -85,7 +90,7 @@ export default function AdminPostsPage() {
     useEffect(() => {
         fetchPosts()
         fetchCategories()
-    }, [])
+    }, [filterStatus])
 
     // Actions
     const handleCreate = () => {
@@ -96,11 +101,31 @@ export default function AdminPostsPage() {
         router.push(`/admin/posts/${post.id}`)
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return
+    const handleDelete = async (id: string, permanent = false) => {
+        const msg = permanent ? 'Bạn có chắc chắn muốn XÓA VĨNH VIỄN bài viết này?' : 'Bạn có chắc chắn muốn đưa bài viết này vào thùng rác?'
+        if (!confirm(msg)) return
 
         try {
-            const res = await fetch(`/api/admin/posts?id=${id}`, { method: 'DELETE' })
+            const url = permanent ? `/api/admin/posts?id=${id}&permanent=true` : `/api/admin/posts?id=${id}`
+            const res = await fetch(url, { method: 'DELETE' })
+            const data = await res.json()
+            if (data.success) {
+                setPosts(posts.filter(p => p.id !== id))
+            } else {
+                alert('Lỗi: ' + data.error)
+            }
+        } catch (error) {
+            alert('Có lỗi xảy ra')
+        }
+    }
+
+    const handleRestore = async (id: string) => {
+        try {
+            const res = await fetch('/api/admin/posts', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, restore: true })
+            })
             const data = await res.json()
             if (data.success) {
                 setPosts(posts.filter(p => p.id !== id))
@@ -306,20 +331,41 @@ export default function AdminPostsPage() {
                                     </td>
                                     <td className="p-6 pt-8 align-top text-right">
                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleEdit(post)}
-                                                className="p-2 text-slate-400 hover:text-primary hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
-                                                title="Chỉnh sửa"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(post.id)}
-                                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
-                                                title="Xóa"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            {filterStatus === 'trash' ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleRestore(post.id)}
+                                                        className="p-2 text-emerald-500 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                                                        title="Khôi phục"
+                                                    >
+                                                        <Plus size={18} className="rotate-45" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(post.id, true)}
+                                                        className="p-2 text-red-500 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                                                        title="Xóa vĩnh viễn"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleEdit(post)}
+                                                        className="p-2 text-slate-400 hover:text-primary hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                                                        title="Chỉnh sửa"
+                                                    >
+                                                        <Edit size={18} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(post.id)}
+                                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                                                        title="Xóa"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
